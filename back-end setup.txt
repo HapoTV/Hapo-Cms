@@ -1,0 +1,384 @@
+# Hapo Cloud Technologies CMS - Backend Setup Guide
+
+## 1. Project Structure
+```
+src/
+├── main/
+│   ├── java/com/hapotech/cms/
+│   │   ├── config/
+│   │   ├── controller/
+│   │   ├── dto/
+│   │   ├── entity/
+│   │   ├── exception/
+│   │   ├── repository/
+│   │   ├── security/
+│   │   ├── service/
+│   │   └── util/
+│   └── resources/
+       ├── application.yml
+       └── db/migration/
+```
+
+## 2. Dependencies (pom.xml)
+
+Required dependencies:
+- Spring Boot Starter Web
+- Spring Boot Starter Data JPA
+- Spring Boot Starter Security
+- Spring Boot Starter Validation
+- PostgreSQL Driver
+- Flyway Migration
+- Lombok
+- JWT (jjwt-api, jjwt-impl, jjwt-jackson)
+- ModelMapper
+- SpringDoc OpenAPI (Swagger)
+
+## 3. Entity Models
+
+### User Entity
+```java
+@Entity
+@Table(name = "users")
+public class User {
+    @Id
+    private String id;
+    private String email;
+    private String password;
+    private String name;
+    @Enumerated(EnumType.STRING)
+    private UserRole role;
+    private LocalDateTime lastActive;
+    private LocalDateTime createdAt;
+}
+```
+
+### Content Entity
+```java
+@Entity
+@Table(name = "content")
+public class Content {
+    @Id
+    private String id;
+    private String name;
+    @Enumerated(EnumType.STRING)
+    private ContentType type;
+    private String url;
+    @ElementCollection
+    private Set<String> tags;
+    @Type(JsonType.class)
+    private Map<String, Object> metadata;
+    private String userId;
+    private LocalDateTime createdAt;
+}
+```
+
+### Campaign Entity
+```java
+@Entity
+@Table(name = "campaigns")
+public class Campaign {
+    @Id
+    private String id;
+    private String name;
+    private String description;
+    private LocalDateTime startDate;
+    private LocalDateTime endDate;
+    @ElementCollection
+    private Set<String> locations;
+    @Enumerated(EnumType.STRING)
+    private CampaignStatus status;
+    @ElementCollection
+    private Set<String> contentIds;
+    private String userId;
+    private LocalDateTime createdAt;
+}
+```
+
+### Screen Entity
+```java
+@Entity
+@Table(name = "screens")
+public class Screen {
+    @Id
+    private String id;
+    private String name;
+    @Enumerated(EnumType.STRING)
+    private ScreenStatus status;
+    private String type;
+    private String location;
+    private String resolution;
+    @Enumerated(EnumType.STRING)
+    private ScreenOrientation orientation;
+    private LocalDateTime lastActive;
+}
+```
+
+### AnalyticsEvent Entity
+```java
+@Entity
+@Table(name = "analytics_events")
+public class AnalyticsEvent {
+    @Id
+    private String id;
+    @Enumerated(EnumType.STRING)
+    private EventType eventType;
+    private String campaignId;
+    private String contentId;
+    private String location;
+    private Integer duration;
+    private LocalDateTime timestamp;
+    private String userId;
+}
+```
+
+### SystemSettings Entity
+```java
+@Entity
+@Table(name = "system_settings")
+public class SystemSettings {
+    @Id
+    private Long id;
+    private Integer retentionPeriod;
+    @ElementCollection
+    private Set<String> defaultTags;
+    private Boolean analyticsEnabled;
+    private LocalDateTime updatedAt;
+}
+```
+
+## 4. REST API Endpoints
+
+### Authentication
+- POST /api/auth/login
+- POST /api/auth/logout
+- POST /api/auth/refresh-token
+
+### Users
+- GET /api/users
+- GET /api/users/{id}
+- POST /api/users
+- PUT /api/users/{id}
+- DELETE /api/users/{id}
+- GET /api/users/{id}/activity
+
+### Content
+- GET /api/content
+- GET /api/content/{id}
+- POST /api/content
+- PUT /api/content/{id}
+- DELETE /api/content/{id}
+- POST /api/content/{id}/tags
+- DELETE /api/content/{id}/tags/{tag}
+- GET /api/content/{id}/stats
+
+### Campaigns
+- GET /api/campaigns
+- GET /api/campaigns/{id}
+- POST /api/campaigns
+- PUT /api/campaigns/{id}
+- DELETE /api/campaigns/{id}
+- POST /api/campaigns/{id}/schedule
+- POST /api/campaigns/{id}/status
+- POST /api/campaigns/{id}/content
+- DELETE /api/campaigns/{id}/content/{contentId}
+- GET /api/campaigns/{id}/analytics
+
+### Screens
+- GET /api/screens
+- GET /api/screens/{id}
+- POST /api/screens
+- PUT /api/screens/{id}
+- DELETE /api/screens/{id}
+- GET /api/screens/{id}/status
+- POST /api/screens/{id}/restart
+- POST /api/screens/{id}/content
+
+### Analytics
+- GET /api/analytics/traffic
+- GET /api/analytics/dwell-time
+- GET /api/analytics/campaigns/{id}
+- POST /api/analytics/track/view
+- POST /api/analytics/track/engagement
+
+### Settings
+- GET /api/settings/system
+- PUT /api/settings/system
+- GET /api/settings/resolutions
+- POST /api/settings/resolutions
+- PUT /api/settings/resolutions/{id}
+- DELETE /api/settings/resolutions/{id}
+- PATCH /api/settings/resolutions/{id}/default
+
+## 5. Security Configuration
+
+### JWT Configuration
+```java
+@Configuration
+public class JwtConfig {
+    @Value("${jwt.secret}")
+    private String secret;
+    
+    @Value("${jwt.expiration}")
+    private Long expiration;
+    
+    // JWT token provider, validator, and utilities
+}
+```
+
+### Security Configuration
+```java
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig {
+    // Configure security rules, CORS, CSRF
+    // JWT authentication filter
+    // Role-based access control
+}
+```
+
+## 6. Database Configuration
+
+### Application Properties
+```yaml
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/hapo_cms
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+```
+
+### Initial Migration
+```sql
+-- V1__initial_schema.sql
+CREATE TABLE users (
+    id VARCHAR(255) PRIMARY KEY,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    role VARCHAR(50) NOT NULL,
+    last_active TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Additional table creation scripts...
+```
+
+## 7. Error Handling
+
+### Global Exception Handler
+```java
+@ControllerAdvice
+public class GlobalExceptionHandler {
+    // Handle various exceptions
+    // Return standardized error responses
+}
+```
+
+### Custom Exceptions
+```java
+public class ResourceNotFoundException extends RuntimeException {
+    // Custom exception handling
+}
+```
+
+## 8. Service Layer Implementation
+
+Key services to implement:
+- UserService
+- AuthenticationService
+- ContentService
+- CampaignService
+- ScreenService
+- AnalyticsService
+- SettingsService
+
+Each service should:
+- Implement business logic
+- Handle data validation
+- Manage transactions
+- Implement caching where appropriate
+- Handle error cases
+
+## 9. Additional Features
+
+### File Storage
+- Implement file storage service for content uploads
+- Support for various content types
+- Handle file validation and processing
+
+### Caching
+- Implement Redis caching for:
+  - User sessions
+  - Content metadata
+  - System settings
+  - Analytics data
+
+### Monitoring
+- Implement actuator endpoints
+- Configure logging
+- Set up metrics collection
+
+### Scheduled Tasks
+- Content retention cleanup
+- Analytics aggregation
+- Screen status monitoring
+
+## 10. Testing
+
+### Test Categories
+- Unit tests for services
+- Integration tests for controllers
+- Security tests
+- Performance tests
+
+### Test Configuration
+```java
+@SpringBootTest
+public class ApplicationTests {
+    // Test configurations and utilities
+}
+```
+
+## 11. Documentation
+
+### API Documentation
+- Configure Swagger/OpenAPI
+- Document all endpoints
+- Include request/response examples
+
+### Code Documentation
+- JavaDoc for public APIs
+- README updates
+- Deployment guide
+
+## 12. Deployment Considerations
+
+### Environment Variables
+- JWT_SECRET
+- DB_USERNAME
+- DB_PASSWORD
+- REDIS_URL
+- FILE_STORAGE_PATH
+- API_BASE_URL
+
+### Production Configuration
+- Enable HTTPS
+- Configure CORS
+- Set up rate limiting
+- Enable security headers
+- Configure logging levels
+
+### Performance Optimization
+- Connection pooling
+- Query optimization
+- Caching strategies
+- Load balancing configuration

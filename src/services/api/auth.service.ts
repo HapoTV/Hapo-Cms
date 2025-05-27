@@ -17,7 +17,9 @@ export const authService = {
     const refreshToken = tokenService.getRefreshToken();
 
     try {
-      await api.post(API_ENDPOINTS.AUTH.LOGOUT, { token, refreshToken });
+      if (token && refreshToken) {
+        await api.post(API_ENDPOINTS.AUTH.LOGOUT, { token, refreshToken });
+      }
     } finally {
       tokenService.clearTokens();
     }

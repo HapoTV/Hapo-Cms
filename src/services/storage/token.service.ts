@@ -23,12 +23,14 @@ export const tokenService = {
   clearTokens: (): void => {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
+    localStorage.removeItem('user');
   },
 
   isTokenExpired: (token: string): boolean => {
     try {
       const decoded = jwtDecode<DecodedToken>(token);
-      return decoded.exp * 1000 < Date.now();
+      // Add a 30-second buffer to handle slight time differences
+      return (decoded.exp * 1000) - 30000 < Date.now();
     } catch {
       return true;
     }

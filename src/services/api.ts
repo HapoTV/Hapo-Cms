@@ -1,8 +1,8 @@
-import axios, { AxiosInstance, AxiosResponse, AxiosError } from 'axios';
+import axios, { AxiosInstance, AxiosResponse, AxiosError, InternalAxiosRequestConfig } from 'axios';
+import { API_BASE_URL, ERROR_MESSAGES } from '../../constants/api.constants';
+import { tokenService } from '../storage/token.service';
+import { authService } from './auth.service';
 
-/**
- * Custom error class for API errors
- */
 export class ApiError extends Error {
   constructor(
     public status: number,
@@ -14,61 +14,62 @@ export class ApiError extends Error {
   }
 }
 
-/**
- * Base API configuration and instance creation
- */
 const createApiInstance = (): AxiosInstance => {
   const instance = axios.create({
-    baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
-    timeout: 10000,
+    baseURL: API_BASE_URL,
+    timeout: 30000,
     headers: {
       'Content-Type': 'application/json',
-    },
+      'Accept': '*/*'
+    }
   });
 
-  // Request interceptor for adding auth token
+  // Request interceptor
   instance.interceptors.request.use(
-    (config) => {
-      const token = localStorage.getItem('authToken');
+    (config: InternalAxiosRequestConfig) => {
+      const token = tokenService.getAccessToken();
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
       return config;
     },
-    (error) => Promise.reject(error)
+    (error: AxiosError) => {
+      console.error('Request Error:', error);
+      return Promise.reject(error);
+    }
   );
 
-  // Response interceptor for handling errors
+  // Response interceptor
   instance.interceptors.response.use(
-    (response) => response,
-    (error: AxiosError) => {
-      if (error.response) {
-        // Handle specific error cases
-        switch (error.response.status) {
-          case 401:
-            // Redirect to login or refresh token
-            window.location.href = '/auth';
-            break;
-          case 403:
-            // Handle forbidden access
-            console.error('Access forbidden');
-            break;
-          case 404:
-            // Handle not found
-            console.error('Resource not found');
-            break;
-          case 500:
-            // Handle server error
-            console.error('Server error');
-            break;
+    (response: AxiosResponse) => response.data,
+    async (error: AxiosError) => {
+      const originalRequest = error.config;
+      
+      // Check if error is due to token expiration
+      if (error.response?.data?.error === 'JWT token has expired' && originalRequest && !originalRequest._retry) {
+        originalRequest._retry = true;
+        
+        try {
+          await authService.refreshToken();
+          const token = tokenService.getAccessToken();
+          if (token && originalRequest.headers) {
+            originalRequest.headers.Authorization = `Bearer ${token}`;
+          }
+          return instance(originalRequest);
+        } catch (refreshError) {
+          // If refresh token fails, clear tokens and redirect to login
+          tokenService.clearTokens();
+          window.location.href = '/auth';
+          return Promise.reject(refreshError);
         }
-
-        throw new ApiError(
-          error.response.status,
-          error.response.data?.message || 'An error occurred',
-          error.response.data
-        );
       }
+
+      if (error.response) {
+        const status = error.response.status;
+        const message = (error.response.data as any)?.message || ERROR_MESSAGES[status] || error.message;
+        throw new ApiError(status, message, error.response.data);
+      }
+
       throw error;
     }
   );

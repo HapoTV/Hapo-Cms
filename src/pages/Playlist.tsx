@@ -1,76 +1,28 @@
-import React, { useState, useCallback } from 'react';
-import { Search, Plus, Edit, Trash2, MoreVertical, Play, Pause, Clock, Calendar } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { Search, Plus, Edit, Trash2, MoreVertical, Play, Pause, Clock, Calendar } from 'lucide-react';
+import { usePlaylistsStore } from '../features/playlists/store/playlists.store';
+import { PlaylistContentTooltip } from '../features/playlists/components/PlaylistContentTooltip';
 
-interface Playlist {
-  id: number;
-  name: string;
-  duration: string;
-  status: 'active' | 'inactive';
-  lastModified: string;
-  itemCount: number;
-}
-
-const mockPlaylists: Playlist[] = [
-  {
-    id: 1,
-    name: 'Morning Rotation',
-    duration: '2h 30m',
-    status: 'active',
-    lastModified: '2024-03-15',
-    itemCount: 12
-  },
-  {
-    id: 2,
-    name: 'Afternoon Specials',
-    duration: '1h 45m',
-    status: 'inactive',
-    lastModified: '2024-03-14',
-    itemCount: 8
-  },
-  {
-    id: 3,
-    name: 'Evening Showcase',
-    duration: '3h 15m',
-    status: 'active',
-    lastModified: '2024-03-13',
-    itemCount: 15
-  }
-];
-
-const Playlist: React.FC = () => {
+export const Playlist = () => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedPlaylists, setSelectedPlaylists] = useState<number[]>([]);
   const [dropdownOpen, setDropdownOpen] = useState<number | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [playlistToDelete, setPlaylistToDelete] = useState<number | null>(null);
+  const [selectedPlaylist, setSelectedPlaylist] = useState<number | null>(null);
+  const { playlists, isLoading, error, fetchPlaylists, deletePlaylist } = usePlaylistsStore();
 
-  const handleSelectPlaylist = (id: number) => {
-    setSelectedPlaylists(prev =>
-      prev.includes(id)
-        ? prev.filter(playlistId => playlistId !== id)
-        : [...prev, id]
-    );
-  };
+  useEffect(() => {
+    fetchPlaylists();
+  }, [fetchPlaylists]);
 
-  const handleSelectAll = () => {
-    setSelectedPlaylists(
-      selectedPlaylists.length === mockPlaylists.length
-        ? []
-        : mockPlaylists.map(playlist => playlist.id)
-    );
-  };
-
-  const handleDeleteClick = useCallback((id: number) => {
-    setPlaylistToDelete(id);
-    setShowDeleteModal(true);
-    setDropdownOpen(null);
-  }, []);
-
-  const handleDelete = async () => {
-    // Implement delete logic here
-    setShowDeleteModal(false);
-    setPlaylistToDelete(null);
+  const handleDelete = async (id: string) => {
+    try {
+      await deletePlaylist(id);
+      setShowDeleteModal(false);
+      setSelectedPlaylist(null);
+    } catch (error) {
+      console.error('Failed to delete playlist:', error);
+    }
   };
 
   const getStatusBadge = (status: 'active' | 'inactive') => {
@@ -85,6 +37,22 @@ const Playlist: React.FC = () => {
       </span>
     );
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-4 bg-red-50 text-red-700 rounded-lg">
+        {error}
+      </div>
+    );
+  }
 
   return (
     <div className="p-8 max-w-7xl mx-auto">
@@ -116,14 +84,6 @@ const Playlist: React.FC = () => {
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                <input
-                  type="checkbox"
-                  checked={selectedPlaylists.length === mockPlaylists.length}
-                  onChange={handleSelectAll}
-                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                />
-              </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Duration</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
@@ -133,16 +93,8 @@ const Playlist: React.FC = () => {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {mockPlaylists.map((playlist) => (
+            {playlists.map((playlist) => (
               <tr key={playlist.id} className="hover:bg-gray-50">
-                <td className="px-6 py-4">
-                  <input
-                    type="checkbox"
-                    checked={selectedPlaylists.includes(playlist.id)}
-                    onChange={() => handleSelectPlaylist(playlist.id)}
-                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                  />
-                </td>
                 <td className="px-6 py-4">
                   <div className="flex items-center">
                     <Play className="w-4 h-4 text-gray-400 mr-2" />
@@ -152,19 +104,19 @@ const Playlist: React.FC = () => {
                 <td className="px-6 py-4">
                   <div className="flex items-center text-sm text-gray-500">
                     <Clock className="w-4 h-4 mr-1" />
-                    {playlist.duration}
+                    {playlist.playlistData.duration || '2h 30m'}
                   </div>
                 </td>
                 <td className="px-6 py-4">
-                  {getStatusBadge(playlist.status)}
+                  {getStatusBadge(playlist.playlistData.repeat ? 'active' : 'inactive')}
                 </td>
                 <td className="px-6 py-4">
-                  <span className="text-sm text-gray-500">{playlist.itemCount} items</span>
+                  <span className="text-sm text-gray-500">{playlist.contentIds.length} items</span>
                 </td>
                 <td className="px-6 py-4">
                   <div className="flex items-center text-sm text-gray-500">
                     <Calendar className="w-4 h-4 mr-1" />
-                    {new Date(playlist.lastModified).toLocaleDateString()}
+                    {new Date().toLocaleDateString()}
                   </div>
                 </td>
                 <td className="px-6 py-4 text-right relative">
@@ -177,17 +129,16 @@ const Playlist: React.FC = () => {
                   {dropdownOpen === playlist.id && (
                     <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg z-10 border border-gray-200">
                       <div className="py-1">
-                        <button
+                        <Link
+                          to={`/playlists/${playlist.id}/edit`}
                           className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
-                          onClick={() => {/* Implement edit */}}
                         >
                           <Edit className="w-4 h-4 mr-2" />
                           Edit
-                        </button>
-                        {playlist.status === 'active' ? (
+                        </Link>
+                        {playlist.playlistData.repeat ? (
                           <button
                             className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
-                            onClick={() => {/* Implement pause */}}
                           >
                             <Pause className="w-4 h-4 mr-2" />
                             Pause
@@ -195,15 +146,14 @@ const Playlist: React.FC = () => {
                         ) : (
                           <button
                             className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
-                            onClick={() => {/* Implement activate */}}
                           >
                             <Play className="w-4 h-4 mr-2" />
                             Activate
                           </button>
                         )}
                         <button
+                          onClick={() => handleDelete(playlist.id)}
                           className="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 w-full text-left"
-                          onClick={() => handleDeleteClick(playlist.id)}
                         >
                           <Trash2 className="w-4 h-4 mr-2" />
                           Delete
@@ -217,32 +167,6 @@ const Playlist: React.FC = () => {
           </tbody>
         </table>
       </div>
-
-      {/* Delete Confirmation Modal */}
-      {showDeleteModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-md w-full p-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Delete Playlist</h3>
-            <p className="text-gray-500 mb-6">
-              Are you sure you want to delete this playlist? This action cannot be undone.
-            </p>
-            <div className="flex justify-end gap-4">
-              <button
-                onClick={() => setShowDeleteModal(false)}
-                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleDelete}
-                className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
-              >
-                Delete
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

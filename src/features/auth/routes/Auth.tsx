@@ -35,8 +35,8 @@ export const Auth = () => {
               </div>
             </div>
             <div className="mt-6 text-center text-sm">
-              <div className="text-gray-600">Email: test@example.com</div>
-              <div className="text-gray-600">Password: @Tester1154</div>
+              <div className="text-gray-600">Email: example@example.com</div>
+              <div className="text-gray-600">Password: Password</div>
             </div>
           </div>
         </div>

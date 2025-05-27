@@ -8,21 +8,24 @@ import { ScreensMonitoring } from '../features/screens/routes/ScreensMonitoring'
 import { Settings } from '../features/settings/routes/Settings';
 import { PrivateRoute } from './PrivateRoute';
 import { MainLayout } from '../layouts/MainLayout';
+import { ErrorBoundary } from '../components/ErrorBoundary';
 
 export const AppRoutes = () => {
   return (
-    <Routes>
-      <Route path="/auth" element={<Auth />} />
-      
-      <Route element={<PrivateRoute><MainLayout /></PrivateRoute>}>
-        <Route index element={<Dashboard />} />
-        <Route path="content/*" element={<ContentLibrary />} />
-        <Route path="campaigns/*" element={<CampaignManagement />} />
-        <Route path="screens/*" element={<ScreensMonitoring />} />
-        <Route path="settings" element={<Settings />} />
-      </Route>
+    <ErrorBoundary>
+      <Routes>
+        <Route path="/auth" element={<Auth />} />
+        
+        <Route element={<PrivateRoute><MainLayout /></PrivateRoute>}>
+          <Route index element={<Dashboard />} />
+          <Route path="content/*" element={<ContentLibrary />} />
+          <Route path="campaigns/*" element={<CampaignManagement />} />
+          <Route path="screens/*" element={<ScreensMonitoring />} />
+          <Route path="settings" element={<Settings />} />
+        </Route>
 
-      <Route path="*" element={<Navigate to="/\" replace />} />
-    </Routes>
+        <Route path="*" element={<Navigate to="/\" replace />} />
+      </Routes>
+    </ErrorBoundary>
   );
 };

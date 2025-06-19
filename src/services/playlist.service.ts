@@ -1,12 +1,6 @@
 import apiService from './api.service';
+import { PlaylistData } from '../types/models/playlist.ts';
 
-export interface PlaylistData {
-  id?: number;
-  name: string;
-  playlistData: any;
-  screenIds: number[];
-  contentIds: number[];
-}
 
 export const playlistService = {
   createPlaylist: async (playlist: Omit<PlaylistData, 'id'>): Promise<PlaylistData> => {

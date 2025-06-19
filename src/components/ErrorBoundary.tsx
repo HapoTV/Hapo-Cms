@@ -1,6 +1,5 @@
 import React, { Component, ErrorInfo } from 'react';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
-import { useNavigate, useLocation } from 'react-router-dom';
 
 interface Props {
   children: React.ReactNode;

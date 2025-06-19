@@ -26,7 +26,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ sidebarCollapsed, setSidebarCo
     { path: '/campaigns', icon: <PlaySquare className="w-5 h-5" />, label: 'Campaigns' },
     { path: '/screens', icon: <Monitor className="w-5 h-5" />, label: 'Screens' },
     { path: '/schedules', icon: <Calendar className="w-5 h-5" />, label: 'Schedules' },
-    { path: '/playlists', icon: <ListMusic className="w-5 h-5" />, label: 'Playlists' },
+    { path: '/playlist', icon: <ListMusic className="w-5 h-5" />, label: 'Playlists' },
     { path: '/settings', icon: <Settings className="w-5 h-5" />, label: 'Settings' },
     { path: '/help', icon: <HelpCircle className="w-5 h-5" />, label: 'Help Center' },
   ];

@@ -1,3 +1,5 @@
+// this file is part of the Zustand store setup for this React application
+//src/store/index.ts
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 

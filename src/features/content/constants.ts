@@ -1,3 +1,4 @@
+// src/features/content/constants.ts
 export const ALLOWED_CONTENT_TYPES = [
   // Video formats
   'video/mp4',

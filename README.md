@@ -1,99 +1,115 @@
 # Hapo Cloud Technologies CMS
 
-A modern, feature-rich Content Management System for digital signage and content distribution.
+A modern, enterprise-grade Content Management System for digital signage and content distribution, built with React and TypeScript.
 
-## Development Credentials
-
-For development purposes, use these temporary credentials:
-
-```
-Email: admin@hapotech.com
-Password: admin123
-```
-
-**WARNING**: These credentials are for development only. Make sure to remove them and implement proper authentication in production.
+![Hapo CMS Dashboard](https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=1200&h=400&q=80)
 
 ## Features
 
-### Authentication
-- Secure email/password authentication
-- Role-based access control (Admin, Editor, Viewer)
-- User management system
-
 ### Content Management
-- Content Library with support for images, videos, and templates
-- Drag-and-drop file uploads
-- Content categorization and tagging
-- Search and filter capabilities
-- Preview functionality
+- Comprehensive media library supporting images, videos, audio, and documents
+- Drag-and-drop file uploads with progress tracking
+- Advanced content organization with tags and metadata
+- Real-time content preview
+- Automated content optimization
 
 ### Campaign Management
-- Create and schedule content campaigns
-- Multi-location targeting
-- Campaign analytics and reporting
-- Status tracking and notifications
-- Calendar view for campaign scheduling
+- Visual campaign builder
+- Flexible scheduling with recurring patterns
+- Location-based targeting
+- Performance analytics and reporting
+- A/B testing capabilities
 
-### System Features
-- Real-time notifications
-- Help Center with searchable documentation
-- Live chat support
-- User activity tracking
-- System configuration management
+### Screen Management
+- Centralized screen control
+- Real-time status monitoring
+- Remote screen configuration
+- Group management for bulk operations
+- Automated health checks
 
-### Analytics
-- Traffic analysis
+### Analytics & Reporting
+- Real-time traffic analysis
 - Dwell time tracking
 - Campaign performance metrics
-- User engagement statistics
+- Custom report generation
+- Data visualization with Recharts
 
-## Technical Stack
+### Security
+- Role-based access control
+- Secure authentication with JWT
+- API rate limiting
+- Audit logging
+- Data encryption
 
-- **Frontend**: React with TypeScript
-- **UI Framework**: Tailwind CSS
-- **Icons**: Lucide React
-- **Charts**: Recharts
-- **Build Tool**: Vite
-- **Database**: Supabase
+## Tech Stack
 
-## Project Structure
+### Frontend
+- React 18.3.1
+- TypeScript
+- Vite
+- Tailwind CSS
+- Zustand for state management
+- React Router v6
+- React Hook Form
+- Zod for validation
+- Recharts for data visualization
+- Lucide React for icons
 
-```
-src/
-├── components/
-│   ├── Charts/
-│   │   ├── DwellTimeChart.tsx
-│   │   ├── TrafficChart.tsx
-│   │   └── index.tsx
-│   ├── NotificationCenter.tsx
-│   └── Footer.tsx
-├── pages/
-│   ├── Auth.tsx
-│   ├── CampaignManagement.tsx
-│   ├── ContentLibrary.tsx
-│   ├── CreateCampaign.tsx
-│   ├── HelpCenter.tsx
-│   └── Settings.tsx
-└── App.tsx
-```
+### Development Tools
+- ESLint
+- PostCSS
+- Terser for minification
+- Vite compression plugin
 
 ## Getting Started
 
-1. Clone the repository
+### Prerequisites
+- Node.js 18.x or higher
+- npm 9.x or higher
+
+### Installation
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/your-org/hapo-cloud-cms.git
+   cd hapo-cloud-cms
+   ```
+
 2. Install dependencies:
    ```bash
    npm install
    ```
-3. Start the development server:
+
+3. Create a `.env` file:
+   ```env
+   VITE_API_BASE_URL=/api
+   ```
+
+4. Start the development server:
    ```bash
    npm run dev
    ```
 
-## Environment Variables
-
-Create a `.env` file with the following variables:
+### Development Credentials
 ```
-VITE_API_URL=http://localhost:8080/api
+Email: admin@hapotech.com
+Password: admin123
+```
+**Note**: These credentials are for development only.
+
+## Project Structure
+```
+src/
+├── components/      # Reusable UI components
+├── features/        # Feature-specific components and logic
+├── contexts/        # React contexts
+├── hooks/          # Custom React hooks
+├── lib/            # Core utilities and configurations
+├── pages/          # Page components
+├── services/       # API and external service integrations
+├── store/          # Global state management
+├── types/          # TypeScript type definitions
+└── utils/          # Helper functions
 ```
 
 ## Building for Production
@@ -101,6 +117,29 @@ VITE_API_URL=http://localhost:8080/api
 ```bash
 npm run build
 ```
+
+This will create an optimized production build with:
+- Code splitting
+- Asset optimization
+- Gzip and Brotli compression
+- Source maps
+- Tree shaking
+
+## Performance Optimizations
+
+- Lazy loading of routes and components
+- Image optimization
+- Efficient bundle splitting
+- Caching strategies
+- Minification and compression
+
+## Browser Support
+
+- Chrome (latest)
+- Firefox (latest)
+- Safari (latest)
+- Edge (latest)
+- Opera (latest)
 
 ## Contributing
 

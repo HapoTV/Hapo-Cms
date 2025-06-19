@@ -1,4 +1,4 @@
-import { api } from '../../../services/api/api';
+import { api } from '../../../services/api';
 import type { ScreenSettings } from '../types/settings';
 
 export const screenSettingsService = {

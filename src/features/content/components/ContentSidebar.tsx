@@ -1,6 +1,8 @@
+// src/features/content/constants.ts
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Folder, Image, Video, Music, FileText, Globe } from 'lucide-react';
+
 
 const navItems = [
   { path: '/content', icon: <Folder className="w-5 h-5" />, label: 'All Content' },

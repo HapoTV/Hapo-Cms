@@ -27,7 +27,7 @@ export const usePlaylistsStore = create<PlaylistsState>()(
             fetchPlaylists: async () => {
                 try {
                     set({ isLoading: true, error: null });
-                    const playlists = await playlistService.getPlaylists();
+                    const playlists = await playlistService.getAllPlaylist();
                     set({ playlists, isLoading: false });
                 } catch (error) {
                     set({ error: 'Failed to fetch playlists', isLoading: false });

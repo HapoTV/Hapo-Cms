@@ -3,13 +3,23 @@ export interface ContentItem {
     name: string;
     type: string;
     url: string;
-    // CORRECTED: 'tags' is an object with string keys and string values.
     tags?:string[];
     duration?: number;
-    uploadDate?: string; // Best set by backend to ensure accuracy
+    uploadDate?: string;
 }
 
-// NOTE: Your previous ContentItem type had a separate `metadata` field.
-// Based on the new JSON, it seems the `tags` object serves this purpose.
-// If you have other metadata, you can keep the `metadata` field, but for now,
-// we will focus on matching the provided JSON.
+export interface Content {
+    id: string;
+    name: string;
+    type: 'image' | 'video' | 'audio' | 'document';
+    url: string;
+    tags: string[];
+    metadata: Record<string, unknown>;
+    userId: string;
+    createdAt: string;
+}
+
+export interface ContentUploadResponse {
+    content: Content;
+    url: string;
+}

@@ -11,7 +11,7 @@ export { default as usersService } from './users.service';
 // Export types
 export type { AuthResponse, LoginRequest, RegisterRequest, UserDTO } from './auth.service';
 export type { ContentItem } from './content.service';
-export type { PlaylistData } from './playlist.service';
+export type {PlaylistDTO} from './playlist.service';
 export type { Schedule, TimeSlot, RecurrencePattern } from './schedule.service';
 export type { ScreenGroup } from './screen-groups.service';
 export type { ScreenPlaylistQueue } from './screen-playlist-queue.service';

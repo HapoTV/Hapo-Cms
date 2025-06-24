@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
-import { PlaySquare, Clock, Tag } from 'lucide-react';
-import { contentService } from '../../../services/content/content.service';
-import type { Content } from '../../../services/content/types';
+import React, {useEffect, useState} from 'react';
+import {Clock, PlaySquare, Tag} from 'lucide-react';
+import {contentService} from '../../../services/content.service';
+import type {Content} from '../../../types/models/ContentItem';
 
 interface ContentTooltipProps {
     contentId: number;
@@ -14,8 +14,17 @@ export const ContentTooltip: React.FC<ContentTooltipProps> = ({ contentId }) => 
     useEffect(() => {
         const fetchContent = async () => {
             try {
-                const data = await contentService.getContentById(contentId.toString());
-                setContent(data);
+                const contentItem = await contentService.getContentById(contentId);
+                setContent({
+                    id: String(contentItem.id),
+                    name: contentItem.name,
+                    type: contentItem.type as 'image' | 'video' | 'audio' | 'document',
+                    url: contentItem.url,
+                    tags: contentItem.tags ?? [],
+                    createdAt: contentItem.uploadDate || new Date().toISOString(),
+                    userId: 'N/A', // Not available in ContentItem
+                    metadata: {duration: contentItem.duration},
+                });
             } catch (error) {
                 console.error('Failed to fetch content:', error);
             } finally {

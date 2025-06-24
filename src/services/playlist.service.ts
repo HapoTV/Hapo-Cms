@@ -1,25 +1,38 @@
 import apiService from './api.service';
-import { PlaylistData } from '../types/models/playlist.ts';
+import {ApiResponse, Page, PlaylistDTO} from '../types/api.types';
+
+// The data type we expect from the /summaries endpoint
+type PaginatedPlaylistsResponse = ApiResponse<Page<PlaylistDTO>>;
 
 
 export const playlistService = {
-  createPlaylist: async (playlist: Omit<PlaylistData, 'id'>): Promise<PlaylistData> => {
-    return apiService.post<PlaylistData>('/api/playlist', playlist);
+    createPlaylist: async (playlist: Omit<PlaylistDTO, 'id'>): Promise<PlaylistDTO> => {
+        return apiService.post<PlaylistDTO>('/api/playlist', playlist);
+    },
+
+    getPlaylistById: async (id: number): Promise<PlaylistDTO> => {
+        return apiService.get<PlaylistDTO>(`/api/playlist/${id}`);
   },
 
-  getPlaylistById: async (id: number): Promise<PlaylistData> => {
-    return apiService.get<PlaylistData>(`/api/playlist/${id}`);
+    /**
+     * Fetches a paginated list of playlist summaries.
+     * @param page - The page number to fetch (0-indexed).
+     * @param size - The number of items per page.
+     */
+    getAllPlaylist: async (page: number, size: number): Promise<PaginatedPlaylistsResponse> => {
+        // Pass page and size as query parameters
+        return apiService.get<PaginatedPlaylistsResponse>(`/api/playlist/summaries?page=${page}&size=${size}`);
   },
 
-  updatePlaylist: async (playlist: PlaylistData): Promise<PlaylistData> => {
-    return apiService.post<PlaylistData>('/api/playlist/update', playlist);
+    updatePlaylist: async (playlist: PlaylistDTO): Promise<PlaylistDTO> => {
+        return apiService.post<PlaylistDTO>('/api/playlist/update', playlist);
   },
 
   deletePlaylist: async (id: number): Promise<void> => {
     return apiService.delete<void>(`/api/playlist/${id}`);
   },
 
-  publishPlaylist: async (playlist: PlaylistData): Promise<string> => {
+    publishPlaylist: async (playlist: PlaylistDTO): Promise<string> => {
     return apiService.post<string>('/api/playlist/publish', playlist);
   },
 

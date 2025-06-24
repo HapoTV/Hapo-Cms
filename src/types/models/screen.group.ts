@@ -6,7 +6,7 @@ export interface ScreenGroup {
     screenIds: number[];
     parentGroupId?: number;
     subGroupIds?: number[];
-    metadata?: any;
+    metadata: Record<string, unknown>;
     defaultPlaylistId?: number;
     version?: number;
 }

@@ -1,8 +1,9 @@
+// src/features/screens/components/ScreenSettings.tsx
 import React from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { screenSettingsSchema } from '../types';
-import type { ScreenSettings as ScreenSettingsType } from '../types';
+import {useForm} from 'react-hook-form';
+import {zodResolver} from '@hookform/resolvers/zod';
+import type {ScreenSettings as ScreenSettingsType} from '../types';
+import {screenSettingsSchema} from '../types';
 
 interface ScreenSettingsProps {
   screenId: string;
@@ -149,7 +150,6 @@ export const ScreenSettings: React.FC<ScreenSettingsProps> = ({
               <p className="mt-1 text-sm text-red-600">{errors.maintenance.restartTime.message}</p>
             )}
           </div>
-
           <div>
             <label className="flex items-center gap-2">
               <input

@@ -1,5 +1,6 @@
+// src/features/screens/components/ScreenDeleteModal.tsx
 import React from 'react';
-import { AlertCircle } from 'lucide-react';
+import {AlertCircle} from 'lucide-react';
 
 interface ScreenDeleteModalProps {
   isOpen: boolean;

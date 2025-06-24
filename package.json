@@ -12,6 +12,7 @@
   "dependencies": {
     "@auth/core": "^0.39.1",
     "@hookform/resolvers": "^3.3.4",
+    "@react-google-maps/api": "^2.20.7",
     "@types/node": "^20.11.24",
     "@types/react-big-calendar": "^1.8.9",
     "axios": "^1.6.7",

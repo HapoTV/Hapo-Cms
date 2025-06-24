@@ -1,11 +1,6 @@
+// src/features/screens/components/ScreenStatusBadge.tsx
 import React from 'react';
-import {
-    CheckCircle,
-    XCircle,
-    Wrench,
-    Clock,
-    AlertCircle
-} from 'lucide-react';
+import {AlertCircle, CheckCircle, Clock, Wrench, XCircle} from 'lucide-react';
 
 interface ScreenStatusBadgeProps {
     status?: 'ONLINE' | 'OFFLINE' | 'MAINTENANCE' | 'PENDING' | 'WARNING',

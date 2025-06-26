@@ -45,3 +45,4 @@ VITE_AWS_REGION=us-east-1
 
 # Other Environment Variables (If needed)
 VITE_APP_DEBUG=true
+/src/pages.zip

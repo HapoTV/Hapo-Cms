@@ -10,8 +10,25 @@ export const playlistService = {
         return apiService.post<PlaylistDTO>('/api/playlist', playlist);
     },
 
-    getPlaylistById: async (id: number): Promise<PlaylistDTO> => {
-        return apiService.get<PlaylistDTO>(`/api/playlist/${id}`);
+    getPlaylistById: async (id: number): Promise<ApiResponse<PlaylistDTO>> => {
+        try {
+            const playlist = await apiService.get<PlaylistDTO>(`/api/playlist/${id}`);
+            return {
+                success: true,
+                message: 'Playlist fetched successfully',
+                data: playlist,
+                timestamp: Date.now(),
+                path: `/api/playlist/${id}`
+            };
+        } catch (error) {
+            return {
+                success: false,
+                message: error instanceof Error ? error.message : 'Failed to fetch playlist',
+                data: null as unknown as PlaylistDTO, // Type assertion to satisfy the return type
+                timestamp: Date.now(),
+                path: `/api/playlist/${id}`
+            };
+        }
   },
 
     /**

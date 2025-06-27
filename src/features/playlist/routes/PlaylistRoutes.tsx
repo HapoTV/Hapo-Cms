@@ -1,8 +1,8 @@
 // src/features/playlist/routes/PlaylistRoutes.tsx
 import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import {Route, Routes} from 'react-router-dom';
 
-// Import the DEFAULT export from PlaylistParent without braces.
+// Import the default export
 import PlaylistParent from '../components/PlaylistParent';
 
 // Import the DEFAULT export from PlaylistForm.tsx.
@@ -10,22 +10,24 @@ import PlaylistParent from '../components/PlaylistParent';
 // `CreatePlaylistPage` makes its purpose clear.
 import CreatePlaylistPage from '../components/PlaylistForm';
 
-// Import the edit page component
-import { PlaylistEditPage } from '../components/PlaylistEditPage';
+// Import the named exports
+import {PlaylistEditPage} from '../components/PlaylistEditPage'; // <-- This will be our new component
+
 
 export const PlaylistRoutes = () => {
     return (
         <Routes>
-            {/* This will now correctly render the PlaylistParent component */}
+            {/* /playlists */}
             <Route index element={<PlaylistParent />} />
 
-            {/* Now this route renders the entire demo page component, which is what we want. */}
+            {/* /playlists/create */}
             <Route path="create" element={<CreatePlaylistPage />} />
 
-            {/* Edit route that will receive the playlist ID as a parameter */}
+            {/* /playlists/:id/edit */}
             <Route path=":id/edit" element={<PlaylistEditPage />} />
 
-            {/* <Route path=":id" element={<PlaylistDetails />} /> */}
+            {/* /playlists/:id */}
+            {/*           <Route path=":id" element={<PlaylistDetailsLayout />} />*/}
         </Routes>
     );
 };

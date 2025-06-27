@@ -1,15 +1,23 @@
 // src/features/playlist/components/PlaylistParent.tsx
 
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import React, {useEffect, useState} from 'react';
+import {Link} from 'react-router-dom';
 import {
-    Search, Plus, Edit, Trash2, MoreVertical, Play, Pause, Clock,
-    Calendar, ChevronLeft, ChevronRight, Loader2 // <-- ADDED for loading state
+    Calendar,
+    ChevronLeft,
+    ChevronRight,
+    Clock,
+    Edit,
+    Loader2,
+    MoreVertical,
+    Play,
+    Plus,
+    Search,
+    Trash2
 } from 'lucide-react';
-import { playlistService } from '../../../services/playlist.service';
-import { PlaylistDTO } from '../../../types/models/playlist.ts';  // <-- IMPORT a proper type
+import {usePlaylistsStore} from "../store/playlists.store.ts";
 
-// Helper function to format duration from seconds to a readable format
+// This pure helper function can remain in the component file
 const formatDuration = (seconds: number): string => {
     if (isNaN(seconds) || seconds < 0) return '0m';
     const h = Math.floor(seconds / 3600);
@@ -18,58 +26,40 @@ const formatDuration = (seconds: number): string => {
 };
 
 const PlaylistParent = () => {
-    const [playlists, setPlaylists] = useState<PlaylistDTO[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    // --- State is now managed by the Zustand store ---
+    const {
+        playlists,
+        isLoading,
+        error,
+        currentPage,
+        totalPages,
+        searchQuery,
+        fetchPlaylists,
+        deletePlaylist,
+        setPage,
+        setSearchQuery
+    } = usePlaylistsStore();
 
-    // Pagination State
-    const [currentPage, setCurrentPage] = useState(0); // API is 0-indexed
-    const [totalPages, setTotalPages] = useState(0);
-    const itemsPerPage = 16;
-
-    // Other UI State
-    const [searchQuery, setSearchQuery] = useState('');
+    // Local UI state for the dropdown menu can remain in the component
     const [dropdownOpen, setDropdownOpen] = useState<number | null>(null);
 
-    // Data fetching effect
+    // Effect to fetch data when the component mounts or the page changes
     useEffect(() => {
-        const fetchPlaylists = async () => {
-            setIsLoading(true);
-            setError(null);
-            try {
-                // TODO: Add search query to the API call when the backend supports it
-                // e.g., playlistService.getAllPlaylist(currentPage, itemsPerPage, searchQuery)
-                const response = await playlistService.getAllPlaylist(currentPage, itemsPerPage);
-                if (response.success) {
-                    setPlaylists(response.data.content);
-                    setTotalPages(response.data.totalPages);
-                } else {
-                    throw new Error(response.message || 'Failed to fetch playlists');
-                }
-            } catch (err) {
-                console.error("Error fetching playlists:", err);
-                setError(err instanceof Error ? err.message : 'An unknown error occurred.');
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
         fetchPlaylists();
-    }, [currentPage]); // Re-fetch when currentPage changes
+    }, [currentPage, fetchPlaylists]); // `fetchPlaylists` is stable, so this re-runs on page change
 
+    // Handler to delete a playlist now calls the store action
     const handleDelete = async (id: number | null) => {
-        console.log('Attempting to delete playlist with ID:', id);
-        // Implement actual delete logic here, which should probably re-fetch data
-        if (id === null) {
-            console.error('Cannot delete playlist: ID is null');
-            return;
-        }else
-        try {
-            await playlistService.deletePlaylist(id);
-            setPlaylists(playlists.filter(playlist => playlist.id !== id));
-        } catch (err) {
-            console.error('Error deleting playlist:', err);
-            setError('Failed to delete playlist');
+        if (id !== null) {
+            await deletePlaylist(id);
+            setDropdownOpen(null); // Close dropdown after action
+        }
+    };
+
+    // Handler for pagination
+    const goToPage = (page: number) => {
+        if (page >= 0 && page < totalPages) {
+            setPage(page);
         }
     };
 
@@ -86,23 +76,14 @@ const PlaylistParent = () => {
         );
     };
 
-    // Note: This function now just updates state, triggering the useEffect
-    const goToPage = (page: number) => {
-        if (page >= 0 && page < totalPages) {
-            setCurrentPage(page);
-        }
-        setDropdownOpen(null);
-    };
-
-    // Note: The search is currently client-side. For a real implementation,
-    // this should trigger a new API call and be debounced.
+    // Client-side filtering based on the search query from the store
     const filteredPlaylists = playlists.filter((playlist) =>
         playlist.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     return (
         <div className="p-8 max-w-7xl mx-auto">
-            {/* ... Top bar with search and create button ... */}
+            {/* Top bar with heading and create button */}
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-2xl font-bold text-gray-900">Playlists</h1>
                 <Link
@@ -114,6 +95,7 @@ const PlaylistParent = () => {
                 </Link>
             </div>
 
+            {/* Search Input */}
             <div className="flex gap-4 mb-6">
                 <div className="relative flex-1 max-w-md">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
@@ -122,14 +104,12 @@ const PlaylistParent = () => {
                         placeholder="Search playlists..."
                         className="pl-10 w-full rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 px-3 py-2"
                         value={searchQuery}
-                        onChange={(e) => {
-                            setSearchQuery(e.target.value);
-                            setCurrentPage(1); // Reset to first page when searching
-                        }}
+                        onChange={(e) => setSearchQuery(e.target.value)}
                     />
                 </div>
             </div>
 
+            {/* Conditional rendering for loading, error, and content states */}
             {isLoading ? (
                 <div className="flex justify-center items-center h-64">
                     <Loader2 className="w-12 h-12 text-blue-500 animate-spin" />
@@ -140,7 +120,6 @@ const PlaylistParent = () => {
                 <>
                     {/* Grid of Playlists */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
-                        {/* We map over `filteredPlaylists` which is derived from state `playlists` */}
                         {filteredPlaylists.map((playlist) => (
                             <div
                                 key={playlist.id}
@@ -148,10 +127,27 @@ const PlaylistParent = () => {
                             >
                                 {/* Dropdown Menu */}
                                 <div className="absolute top-4 right-4">
-                                     {/* ... dropdown logic ... */}
+                                    <button
+                                        onClick={() => setDropdownOpen(dropdownOpen === playlist.id ? null : playlist.id)}>
+                                        <MoreVertical className="w-5 h-5 text-gray-500"/>
+                                    </button>
                                      {dropdownOpen === playlist.id && (
                                          <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg z-10 border border-gray-200">
-                                            {/* ... menu items ... */}
+                                             {/* CHANGE: Corrected the link path */}
+                                             <Link
+                                                 to={`${playlist.id}/edit`}
+                                                 className="flex items-center w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                             >
+                                                 <Edit className="w-4 h-4 mr-2"/>
+                                                 Edit
+                                             </Link>
+                                             <button
+                                                 onClick={() => handleDelete(playlist.id)}
+                                                 className="flex items-center w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+                                             >
+                                                 <Trash2 className="w-4 h-4 mr-2"/>
+                                                 Delete
+                                             </button>
                                          </div>
                                      )}
                                 </div>
@@ -197,24 +193,19 @@ const PlaylistParent = () => {
                             >
                                 <ChevronLeft className="w-5 h-5" />
                             </button>
-
-                            {[...Array(totalPages)].map((_, index) => {
-                                const page = index; // 0-indexed
-                                return (
-                                    <button
-                                        key={page}
-                                        onClick={() => goToPage(page)}
-                                        className={`px-3 py-2 rounded-lg text-sm font-medium ${
-                                            currentPage === page
-                                                ? 'bg-blue-500 text-white'
-                                                : 'border border-gray-300 hover:bg-gray-50'
-                                        }`}
-                                    >
-                                        {page + 1} {/* Display as 1-indexed */}
-                                    </button>
-                                );
-                            })}
-
+                            {[...Array(totalPages)].map((_, index) => (
+                                <button
+                                    key={index}
+                                    onClick={() => goToPage(index)}
+                                    className={`px-3 py-2 rounded-lg text-sm font-medium ${
+                                        currentPage === index
+                                            ? 'bg-blue-500 text-white'
+                                            : 'border border-gray-300 hover:bg-gray-50'
+                                    }`}
+                                >
+                                    {index + 1}
+                                </button>
+                            ))}
                             <button
                                 onClick={() => goToPage(currentPage + 1)}
                                 disabled={currentPage >= totalPages - 1}

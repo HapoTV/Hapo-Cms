@@ -21,10 +21,8 @@ export interface ScreenPlaylistQueueDTO {
     playlistId: number;
     queuePosition: number;
     isActive: boolean;
-
-    // Optional fields for expanded information
-    screenName?: string;
-    playlistName?: string;
+    screenName: string;
+    playlistName: string;
 }
 
 // A generic type for Spring's Page object

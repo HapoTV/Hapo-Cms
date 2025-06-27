@@ -1,6 +1,6 @@
 // src/services/content.service.ts
 import apiService from './api.service';
-import { ContentItem } from '../types/models/ContentItem';
+import {ContentItem} from '../types/models/ContentItem';
 
 /**
  * Defines the shape of the standard API response wrapper from the backend.
@@ -92,6 +92,27 @@ export const contentService = {
     // This assumes you have an endpoint that returns all content
     const responseWrapper = await apiService.get<ApiResponse<ContentItem[]>>(`/api/content`);
     return responseWrapper.data || [];
+  },
+
+  /**
+   * Fetches multiple content items by their IDs.
+   * @param ids Array of content IDs to fetch
+   * @returns Promise resolving to an ApiResponse containing an array of ContentItems
+   */
+  getContentsByIds: async (ids: number[]): Promise<ApiResponse<ContentItem[]>> => {
+    // In a real implementation, this would call an API endpoint that accepts multiple IDs
+    // For now, we'll mock it by fetching all content and filtering by ID
+    const allContent = await contentService.getAllContent();
+    const filteredContent = allContent.filter(item => ids.includes(item.id));
+
+    // Return in the expected ApiResponse format
+    return {
+      success: true,
+      message: 'Content items fetched successfully',
+      data: filteredContent,
+      timestamp: Date.now(),
+      path: '/api/content/batch'
+    };
   },
 
   /**

@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import { X, Search, Monitor, PlaySquare } from 'lucide-react';
-import { screensService } from '../../../services/screens.service';
-import type { Schedule } from '../types';
-import type { Screen } from '../../../services/screens.service';
+import React, {useState} from 'react';
+import {Monitor, Search, X} from 'lucide-react';
+import type {Screen} from '../../../services/screens.service';
+import {screensService} from '../../../services/screens.service';
+import type {Schedule} from '../types';
 
 interface ScheduleDetailsModalProps {
     isOpen: boolean;
@@ -11,7 +11,7 @@ interface ScheduleDetailsModalProps {
     initialData?: Partial<Schedule>;
 }
 
-export const ScheduleDetailsModal: React.FC<ScheduleDetailsModalProps> = ({
+export const ScheduleManager: React.FC<ScheduleDetailsModalProps> = ({
                                                                               isOpen,
                                                                               onClose,
                                                                               onSave,

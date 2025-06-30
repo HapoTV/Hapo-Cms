@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react';
-import { Plus } from 'lucide-react';
-import { ScheduleCalendar } from './ScheduleCalendar';
-import { ScheduleDetailsModal } from './ScheduleDetailsModal';
-import { useScheduleStore } from '../stores/schedule.store';
-import type { Schedule } from '../types';
+import React, {useEffect, useState} from 'react';
+import {Plus} from 'lucide-react';
+import {ScheduleCalendar} from './ScheduleCalendar';
+import {ScheduleManager} from './ScheduleManager';
+import {useScheduleStore} from '../store/schedule.store';
+import type {Schedule} from '../types';
 
 const ScheduleParent: React.FC = () => {
   const { schedules, fetchSchedules, createSchedule, updateSchedule } = useScheduleStore();
@@ -59,7 +59,7 @@ const ScheduleParent: React.FC = () => {
         onSelectSlot={handleSelectSlot}
       />
 
-      <ScheduleDetailsModal
+      <ScheduleManager
         isOpen={isModalOpen}
         onClose={() => {
           setIsModalOpen(false);

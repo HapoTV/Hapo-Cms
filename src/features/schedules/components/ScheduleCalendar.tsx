@@ -1,8 +1,8 @@
-import React, { useMemo } from 'react';
-import { Calendar, dateFnsLocalizer, Views } from 'react-big-calendar';
-import { format, parse, startOfWeek, getDay } from 'date-fns';
-import { enUS } from 'date-fns/locale';
-import type { Schedule } from '../types';
+import React, {useMemo} from 'react';
+import {Calendar, dateFnsLocalizer, Views} from 'react-big-calendar';
+import {format, getDay, parse, startOfWeek} from 'date-fns';
+import {enUS} from 'date-fns/locale';
+import type {Schedule} from '../types';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 
 const locales = {
@@ -17,10 +17,40 @@ const localizer = dateFnsLocalizer({
     locales,
 });
 
+interface CalendarEvent {
+    id?: string;
+    title: string;
+    start: Date;
+    end: Date;
+    allDay: boolean;
+    resource: Schedule;
+}
+
+interface SlotInfo {
+    start: Date;
+    end: Date;
+    slots: Date[];
+    action: 'select' | 'click' | 'doubleClick';
+    bounds: {
+        x: number;
+        y: number;
+        top: number;
+        right: number;
+        left: number;
+        bottom: number;
+    };
+    box: {
+        clientX: number;
+        clientY: number;
+        x: number;
+        y: number;
+    };
+}
+
 interface ScheduleCalendarProps {
     schedules: Schedule[];
-    onSelectEvent: (event: any) => void;
-    onSelectSlot: (slotInfo: any) => void;
+    onSelectEvent: (event: CalendarEvent) => void;
+    onSelectSlot: (slotInfo: SlotInfo) => void;
 }
 
 export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
@@ -39,9 +69,9 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
         }));
     }, [schedules]);
 
-    const eventStyleGetter = (event: any) => {
+    const eventStyleGetter = (event: CalendarEvent) => {
         const priority = event.resource.priority;
-        const style: any = {
+        const style: React.CSSProperties = {
             borderRadius: '4px',
             opacity: 0.8,
             border: '0',

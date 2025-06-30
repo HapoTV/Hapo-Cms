@@ -1,7 +1,7 @@
-import { create } from 'zustand';
-import { devtools } from 'zustand/middleware';
-import { scheduleService } from '../services/schedule.service';
-import type { Schedule } from '../types';
+import {create} from 'zustand';
+import {devtools} from 'zustand/middleware';
+import {scheduleService} from '../services/schedule.service';
+import type {Schedule} from '../types';
 
 interface ScheduleState {
     schedules: Schedule[];
@@ -30,6 +30,7 @@ export const useScheduleStore = create<ScheduleState>()(
                     set({ schedules, isLoading: false });
                 } catch (error) {
                     set({ error: 'Failed to fetch schedules', isLoading: false });
+                    console.error("Error fetching schedules:", error);
                 }
             },
 
@@ -52,7 +53,7 @@ export const useScheduleStore = create<ScheduleState>()(
                     set({ isLoading: true, error: null });
                     const updatedSchedule = await scheduleService.updateSchedule(id, schedule);
                     set(state => ({
-                        schedules: state.schedules.map(s => s.id === id ? updatedSchedule : s),
+                        schedules: state.schedules.map(s => (s.id && s.id === id) ? updatedSchedule : s),
                         isLoading: false
                     }));
                 } catch (error) {

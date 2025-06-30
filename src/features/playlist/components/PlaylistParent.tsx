@@ -15,7 +15,7 @@ import {
     Search,
     Trash2
 } from 'lucide-react';
-import {usePlaylistsStore} from "../store/playlists.store.ts";
+import {usePlaylistsStore} from "../store/playlists.store";
 
 // This pure helper function can remain in the component file
 const formatDuration = (seconds: number): string => {
@@ -156,9 +156,11 @@ const PlaylistParent = () => {
                                 <div className="mb-4">
                                     <div className="flex items-center mb-2">
                                         <Play className="w-5 h-5 text-blue-500 mr-2" />
-                                        <h3 className="text-lg font-semibold text-gray-900 truncate pr-8">
-                                            {playlist.name}
-                                        </h3>
+                                        <Link to={`${playlist.id}`} className="hover:text-blue-600">
+                                            <h3 className="text-lg font-semibold text-gray-900 truncate pr-8">
+                                                {playlist.name}
+                                            </h3>
+                                        </Link>
                                     </div>
                                     <div className="mb-3">
                                         {getStatusBadge(playlist.playlistData.loop)}

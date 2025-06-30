@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
-import { Monitor } from 'lucide-react';
-import { screensService } from '../../../services/screens.service';
-import type { Screen } from '../../../services/screens.service';
+import React, {useEffect, useState} from 'react';
+import {Monitor} from 'lucide-react';
+import type {Screen} from '../../../services/screens.service';
+import {screensService} from '../../../services/screens.service';
 
 interface ScreenTooltipProps {
     screenId: number;
@@ -46,7 +46,7 @@ export const ScreenTooltip: React.FC<ScreenTooltipProps> = ({ screenId }) => {
             </div>
             <div className="text-sm text-gray-600">
                 <p>Type: {screen.type}</p>
-                <p>Location: {screen.location.name}</p>
+                <p>Location: {screen.location?.name || 'Unknown'}</p>
                 <p>Status: {screen.status}</p>
             </div>
         </div>

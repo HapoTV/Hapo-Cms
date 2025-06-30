@@ -78,7 +78,12 @@ export const usePlaylistDetailsStore = create<PlaylistDetailsState & PlaylistDet
                 isLoading: false,
                 totalDuration: calculateTotalDuration(finalItems),
             });
-        } catch (err) { /* ... error handling ... */
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'An unknown error occurred.';
+            set({
+                isLoading: false,
+                error: message
+            });
         }
     },
 
@@ -99,9 +104,12 @@ export const usePlaylistDetailsStore = create<PlaylistDetailsState & PlaylistDet
             };
 
             // The API might not want this part of the object back, so we remove it.
-            delete (updatedPlaylistData as any).screenPlaylistQueues;
+            // Using a type assertion with a more specific type
+            const playlistWithQueues = updatedPlaylistData as PlaylistDTO & { screenPlaylistQueues?: unknown };
+            delete playlistWithQueues.screenPlaylistQueues;
 
-            const response = await playlistService.updatePlaylist(playlist.id, updatedPlaylistData);
+            // Call updatePlaylist with the correct signature (just the playlist object)
+            const response = await playlistService.updatePlaylist(updatedPlaylistData);
             if (!response.success) throw new Error(response.message);
 
             set({isSaving: false, error: null, playlist: response.data});
@@ -137,5 +145,25 @@ export const usePlaylistDetailsStore = create<PlaylistDetailsState & PlaylistDet
     clearState: () => {
         set({...initialState, isLoading: false});
     },
-    // ... other actions like addItem, removeItem
+
+    addItem: (item: ContentItem, duration: number) => {
+        set(state => {
+            const newItem: PlaylistItem = {...item, duration};
+            const updatedItems = [...state.items, newItem];
+            return {
+                items: updatedItems,
+                totalDuration: calculateTotalDuration(updatedItems),
+            };
+        });
+    },
+
+    removeItem: (itemId: number) => {
+        set(state => {
+            const updatedItems = state.items.filter(item => item.id !== itemId);
+            return {
+                items: updatedItems,
+                totalDuration: calculateTotalDuration(updatedItems),
+            };
+        });
+    }
 }));

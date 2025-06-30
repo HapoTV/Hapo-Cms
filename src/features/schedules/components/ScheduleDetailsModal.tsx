@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { X, Plus, Trash } from 'lucide-react';
-import type { Schedule, TimeSlot } from '../types';
+import React, {useEffect, useState} from 'react';
+import {Plus, Trash, X} from 'lucide-react';
+import type {Schedule, TimeSlot} from '../types';
 
 interface ScheduleDetailsModalProps {
   isOpen: boolean;
@@ -82,7 +82,7 @@ export const ScheduleDetailsModal: React.FC<ScheduleDetailsModalProps> = ({
     setFormData(prev => ({
       ...prev,
       recurrencePattern: {
-        ...prev.recurrencePattern!,
+        ...(prev.recurrencePattern || {}),
         [name]: value
       }
     }));
@@ -98,7 +98,7 @@ export const ScheduleDetailsModal: React.FC<ScheduleDetailsModalProps> = ({
       return {
         ...prev,
         recurrencePattern: {
-          ...prev.recurrencePattern!,
+          ...(prev.recurrencePattern || {}),
           daysOfWeek: newDays
         }
       };
@@ -214,7 +214,7 @@ export const ScheduleDetailsModal: React.FC<ScheduleDetailsModalProps> = ({
               <input
                 type="datetime-local"
                 name="startDate"
-                value={formData.startDate ? new Date(formData.startDate).toISOString().slice(0, 16) : ''}
+                value={formData.startDate && !isNaN(new Date(formData.startDate).getTime()) ? new Date(formData.startDate).toISOString().slice(0, 16) : ''}
                 onChange={(e) => {
                   const date = new Date(e.target.value);
                   setFormData(prev => ({
@@ -234,7 +234,7 @@ export const ScheduleDetailsModal: React.FC<ScheduleDetailsModalProps> = ({
               <input
                 type="datetime-local"
                 name="endDate"
-                value={formData.endDate ? new Date(formData.endDate).toISOString().slice(0, 16) : ''}
+                value={formData.endDate && !isNaN(new Date(formData.endDate).getTime()) ? new Date(formData.endDate).toISOString().slice(0, 16) : ''}
                 onChange={(e) => {
                   const date = new Date(e.target.value);
                   setFormData(prev => ({
@@ -405,7 +405,7 @@ export const ScheduleDetailsModal: React.FC<ScheduleDetailsModalProps> = ({
                       <label className="block text-xs text-gray-500 mb-1">Start Time</label>
                       <input
                         type="time"
-                        value={slot.startTime.slice(0, 5)}
+                        value={slot.startTime ? slot.startTime.slice(0, 5) : '00:00'}
                         onChange={(e) => handleTimeSlotChange(index, 'startTime', e.target.value + ':00')}
                         className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm"
                       />
@@ -414,7 +414,7 @@ export const ScheduleDetailsModal: React.FC<ScheduleDetailsModalProps> = ({
                       <label className="block text-xs text-gray-500 mb-1">End Time</label>
                       <input
                         type="time"
-                        value={slot.endTime.slice(0, 5)}
+                        value={slot.endTime ? slot.endTime.slice(0, 5) : '00:00'}
                         onChange={(e) => handleTimeSlotChange(index, 'endTime', e.target.value + ':00')}
                         className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm"
                       />
@@ -503,7 +503,7 @@ export const ScheduleDetailsModal: React.FC<ScheduleDetailsModalProps> = ({
                   setFormData(prev => ({
                     ...prev,
                     metadata: {
-                      ...prev.metadata!,
+                      ...(prev.metadata || {}),
                       targetAudience: e.target.value
                     }
                   }));
@@ -523,7 +523,7 @@ export const ScheduleDetailsModal: React.FC<ScheduleDetailsModalProps> = ({
                   setFormData(prev => ({
                     ...prev,
                     metadata: {
-                      ...prev.metadata!,
+                      ...(prev.metadata || {}),
                       region: e.target.value
                     }
                   }));

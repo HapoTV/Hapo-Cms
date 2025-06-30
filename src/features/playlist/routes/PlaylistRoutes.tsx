@@ -11,7 +11,8 @@ import PlaylistParent from '../components/PlaylistParent';
 import CreatePlaylistPage from '../components/PlaylistForm';
 
 // Import the named exports
-import {PlaylistEditPage} from '../components/PlaylistEditPage'; // <-- This will be our new component
+//import {PlaylistEditPage} from '../components/PlaylistEditPage'; // <-- This will be our new component
+import PlaylistDetailsLayout from '../components/PlaylistDetailsLayout'; // <-- Import the details layout component
 
 
 export const PlaylistRoutes = () => {
@@ -24,10 +25,10 @@ export const PlaylistRoutes = () => {
             <Route path="create" element={<CreatePlaylistPage />} />
 
             {/* /playlists/:id/edit */}
-            <Route path=":id/edit" element={<PlaylistEditPage />} />
+            {/* <Route path=":id/edit" element={<PlaylistEditPage />} />*/}
 
             {/* /playlists/:id */}
-            {/*           <Route path=":id" element={<PlaylistDetailsLayout />} />*/}
+            <Route path=":id/edit" element={<PlaylistDetailsLayout/>}/>
         </Routes>
     );
 };

@@ -1,47 +1,7 @@
-import React, {useState} from 'react';
+import React, {useEffect} from 'react';
 import {ChevronLeft, MoreHorizontal, Upload} from 'lucide-react';
-
-const mockUuid = () => Math.random().toString(36).substr(2, 9);
-
-const usePlaylistStore = () => {
-    const [items, setItems] = useState([
-        {
-            id: 'item-1',
-            imageUrl: 'https://via.placeholder.com/120x160/22c55e/ffffff?text=SOUP',
-            duration: 5,
-        },
-        {
-            id: 'item-2',
-            imageUrl: 'https://via.placeholder.com/120x160/ef4444/ffffff?text=RED',
-            duration: 5,
-        },
-        {
-            id: 'item-3',
-            imageUrl: 'https://via.placeholder.com/120x160/22c55e/ffffff?text=GREEN',
-            duration: 12,
-        }
-    ]);
-
-    const addItem = (newItem) => {
-        if (items.length < 10) {
-            setItems([...items, newItem]);
-        }
-    };
-
-    const updateDuration = (itemId, change) => {
-        setItems(items.map(item =>
-            item.id === itemId
-                ? {...item, duration: Math.max(1, item.duration + change)}
-                : item
-        ));
-    };
-
-    const totalDuration = () => {
-        return items.reduce((total, item) => total + item.duration, 0);
-    };
-
-    return {items, addItem, updateDuration, totalDuration};
-};
+import {usePlaylistDetailsStore} from '../store/playlistDetails.store';
+import {contentService} from '../../../services/content.service';
 
 const formatTime = (seconds) => {
     const m = String(Math.floor(seconds / 60)).padStart(2, '0');
@@ -49,23 +9,29 @@ const formatTime = (seconds) => {
     return `${m}:${s}`;
 };
 
-export default function PlaylistDetailsLayout() {
-    const {items, addItem, updateDuration, totalDuration} = usePlaylistStore();
+export default function PlaylistEditForm() {
+    const {
+        items,
+        totalDuration
+    } = usePlaylistDetailsStore();
 
-    const handleUpload = () => {
-        const colors = ['3b82f6', '10b981', 'f59e0b', 'ef4444', '8b5cf6'];
-        const randomColor = colors[Math.floor(Math.random() * colors.length)];
-        const itemNumber = items.length + 1;
-
-        const fakeImage = {
-            id: mockUuid(),
-            imageUrl: `https://via.placeholder.com/120x160/${randomColor}/ffffff?text=NEW+${itemNumber}`,
-            duration: 5,
+    // Fetch library items when the component mounts
+    useEffect(() => {
+        const fetchLibraryItems = async () => {
+            try {
+                // Use the content service to fetch all content items
+                const response = await contentService.getAllContent();
+                // We could use these items to display in a library section
+                console.log('Library items fetched:', response);
+            } catch (error) {
+                console.error('Error fetching library items:', error);
+            }
         };
-        addItem(fakeImage);
-    };
 
-    const padSlots = [...items, ...Array(10 - items.length).fill(null)];
+        fetchLibraryItems();
+    }, []);
+
+    const padSlots = [...items, ...Array(Math.max(0, 10 - items.length)).fill(null)];
 
     return (
         <div className="min-h-screen bg-gray-50">

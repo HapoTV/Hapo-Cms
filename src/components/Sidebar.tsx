@@ -1,16 +1,19 @@
+// Description: Sidebar component for the Hapo CMS application, providing navigation links and a toggle for collapsing the sidebar.
+// src/components/Sidebar.tsx
+
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import {Link, useLocation} from 'react-router-dom';
 import {
-  LayoutDashboard,
-  Image,
-  PlaySquare,
-  Monitor,
   Calendar,
-  Settings,
-  HelpCircle,
-  Menu,
   Cloud,
-  ListMusic
+  HelpCircle,
+  Image,
+  LayoutDashboard,
+  ListMusic,
+  Menu,
+  Monitor,
+  PlaySquare,
+  Settings
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -26,7 +29,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ sidebarCollapsed, setSidebarCo
     { path: '/campaigns', icon: <PlaySquare className="w-5 h-5" />, label: 'Campaigns' },
     { path: '/screens', icon: <Monitor className="w-5 h-5" />, label: 'Screens' },
     { path: '/schedules', icon: <Calendar className="w-5 h-5" />, label: 'Schedules' },
-    { path: '/playlist', icon: <ListMusic className="w-5 h-5" />, label: 'Playlists' },
+    {path: '/playlists', icon: <ListMusic className="w-5 h-5"/>, label: 'Playlists'},
     { path: '/settings', icon: <Settings className="w-5 h-5" />, label: 'Settings' },
     { path: '/help', icon: <HelpCircle className="w-5 h-5" />, label: 'Help Center' },
   ];

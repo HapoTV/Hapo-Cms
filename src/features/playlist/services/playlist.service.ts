@@ -1,7 +1,10 @@
-import { create } from 'zustand';
-import { devtools } from 'zustand/middleware';
-import { playlistService } from '../services/playlist.service';
-import type { Playlist } from '../types';
+// This file should be renamed to playlists.store.ts as it contains a store, not a service
+// For now, we'll update the imports to avoid circular references
+
+import {create} from 'zustand';
+import {devtools} from 'zustand/middleware';
+import {playlistService} from '../../../services/playlist.service';
+import type {Playlist} from '../types';
 
 interface PlaylistsState {
   playlists: Playlist[];
@@ -30,6 +33,7 @@ export const usePlaylistsStore = create<PlaylistsState>()(
           set({ playlists, isLoading: false });
         } catch (error) {
           set({ error: 'Failed to fetch playlists', isLoading: false });
+            console.error("Error fetching playlists:", error);
         }
       },
 

@@ -11,6 +11,7 @@ import {CampaignManagement} from '../features/campaigns/routes/CampaignManagemen
 import {ScreensMonitoring} from '../features/screens/routes/ScreensMonitoring';
 import {PlaylistRoutes} from '../features/playlist/routes/PlaylistRoutes';
 import {ScheduleRoutes} from '../features/schedules/routes/ScheduleRoutes';
+import {HelpCenter} from '../features/help/routes/HelpCenter';
 import {Settings} from '../features/settings/routes/Settings';
 import {PrivateRoute} from './PrivateRoute';
 import {MainLayout} from '../layouts/MainLayout';
@@ -22,13 +23,20 @@ export const AppRoutes = () => {
       <Routes>
         <Route path="/auth" element={<Auth />} />
 
-        <Route element={<PrivateRoute><MainLayout /></PrivateRoute>}>
+          <Route
+              element={
+                  <PrivateRoute>
+                      <MainLayout/>
+                  </PrivateRoute>
+              }
+          >
           <Route index element={<Dashboard />} />
           <Route path="content/*" element={<ContentLibrary />} />
           <Route path="campaigns/*" element={<CampaignManagement />} />
           <Route path="screens/*" element={<ScreensMonitoring />} />
           <Route path="schedules/*" element={<ScheduleRoutes />} />
           <Route path="playlists/*" element={<PlaylistRoutes/>}/>
+              <Route path="help/*" element={<HelpCenter/>}/>
           <Route path="settings/*" element={<Settings />} />
         </Route>
 

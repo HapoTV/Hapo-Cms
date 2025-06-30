@@ -6,8 +6,8 @@
  * @path src/services/api.service.ts
  */
 
-import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
-import { tokenService } from './token.service';
+import axios, {AxiosInstance, AxiosRequestConfig} from 'axios';
+import {tokenService} from './token.service';
 import authService from './auth.service';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
@@ -20,6 +20,7 @@ const apiClient: AxiosInstance = axios.create({
   baseURL: API_URL,
   headers: {
     'Content-Type': 'application/json',
+    'Accept': 'application/json',
   },
   timeout: 10000,
 });

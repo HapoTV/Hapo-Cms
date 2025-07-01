@@ -1,6 +1,8 @@
 # Hapo Cloud Technologies CMS
 
-A modern, enterprise-grade Content Management System for digital signage and content distribution, built with React and TypeScript.
+A modern, enterprise-grade Content Management System for digital signage and content distribution, built with React and
+TypeScript. Features include comprehensive playlist management, automated content optimization, and seamless deployment
+with Render.com integration.
 
 ![Hapo CMS Dashboard](https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=1200&h=400&q=80)
 
@@ -19,6 +21,14 @@ A modern, enterprise-grade Content Management System for digital signage and con
 - Location-based targeting
 - Performance analytics and reporting
 - A/B testing capabilities
+
+### Playlist Management
+
+- Intuitive playlist creation and editing
+- Duration control for individual content items
+- Content library integration with search functionality
+- One-click publishing to multiple screens
+- Real-time duration calculation
 
 ### Screen Management
 - Centralized screen control
@@ -41,6 +51,13 @@ A modern, enterprise-grade Content Management System for digital signage and con
 - Audit logging
 - Data encryption
 
+### Server Management
+
+- Automated server deployment via Render.com
+- Smart server wake-up with visual progress tracking
+- Graceful handling of cold starts
+- Real-time deployment status updates
+
 ## Tech Stack
 
 ### Frontend
@@ -54,6 +71,13 @@ A modern, enterprise-grade Content Management System for digital signage and con
 - Zod for validation
 - Recharts for data visualization
 - Lucide React for icons
+- React Helmet Async for document head management
+
+### Backend & Deployment
+
+- Render.com for serverless deployment
+- Automated deployment hooks
+- Server sleep/wake optimization
 
 ### Development Tools
 - ESLint
@@ -89,6 +113,9 @@ A modern, enterprise-grade Content Management System for digital signage and con
    ```bash
    npm run dev
    ```
+
+5. When you first access the application, you'll see a loading screen while the backend server wakes up. This typically
+   takes about 2 minutes.
 
 ### Development Credentials
 ```

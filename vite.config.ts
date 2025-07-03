@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite';
+import {defineConfig} from 'vite';
 import react from '@vitejs/plugin-react';
 import compression from 'vite-plugin-compression';
 
@@ -46,8 +46,11 @@ export default defineConfig({
         drop_debugger: true,
       },
     },
+    commonjsOptions: {
+      transformMixedEsModules: true,
+    },
   },
   optimizeDeps: {
-    include: ['react', 'react-dom', 'recharts', 'lucide-react', 'axios'],
+    include: ['react', 'react-dom', 'recharts', 'lucide-react', 'axios', 'music-metadata'],
   },
 });

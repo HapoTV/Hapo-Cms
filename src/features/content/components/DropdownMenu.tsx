@@ -1,26 +1,28 @@
 import React from 'react';
-import { Edit, Trash2, Copy, Move, FileText, ListPlus, Monitor } from 'lucide-react';
-import { ContentItem } from '../../../types/models/ContentItem';
-import { contentService } from '../../../services/content.service';
+import {Copy, Edit, FileText, ListPlus, Monitor, Move, Trash2} from 'lucide-react';
+import {ContentItem} from '../../../types/models/ContentItem';
+import {useContentStore} from '../store/content.store'; // Import the store
 
 interface DropdownMenuProps {
     item: ContentItem;
-    onDelete: (id: string) => void; // Callback to update the parent's state
+    onClose: () => void; // Add a callback to close the dropdown
 }
 
-export const DropdownMenu: React.FC<DropdownMenuProps> = ({ item, onDelete }) => {
+export const DropdownMenu: React.FC<DropdownMenuProps> = ({item, onClose}) => {
+    // Get the delete action from our store
+    const {deleteContent} = useContentStore();
+
     const handleDelete = async () => {
-        // Confirm with the user before deleting
-        if (window.confirm(`Are you sure you want to delete "${item.name}"? This action cannot be undone.`)) {
+        onClose(); // Close dropdown immediately for better UX
+        if (window.confirm(`Are you sure you want to delete "${item.name}"? This also deletes the file from storage and cannot be undone.`)) {
             try {
-                console.log("Deleting content:", item.id);
-                await contentService.deleteContent(item.id);
-                // Call the parent's onDelete function to remove the item from the UI
-                onDelete(item.id);
-                // You could also show a success toast notification here
+                // Call the store action. It handles everything!
+                await deleteContent(item);
+                // Optionally show a success toast here
+                // Note: The UI will update automatically because the store's state changes.
             } catch (error) {
-                console.error("Failed to delete content:", error);
-                alert("Failed to delete content. Please try again.");
+                console.error("Deletion failed:", error);
+                alert(error instanceof Error ? error.message : "An unknown error occurred during deletion.");
             }
         }
     };

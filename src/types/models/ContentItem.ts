@@ -1,25 +1,17 @@
 export interface ContentItem {
-    id: number;
+    id?: number; // Make id optional for creating new content
     name: string;
     type: string;
     url: string;
-    tags?:string[];
+    tags?: Record<string, string>; // Changed from string[] to object structure
     duration?: number;
-    uploadDate?: string;
-}
-
-export interface Content {
-    id: string;
-    name: string;
-    type: 'image' | 'video' | 'audio' | 'document';
-    url: string;
-    tags: string[];
     metadata: Record<string, unknown>;
-    userId: string;
-    createdAt: string;
+    uploadDate?: string;
+    campaignId?: number;
+    screenIds?: number[]; // Add missing field
 }
 
 export interface ContentUploadResponse {
-    content: Content;
+    content: ContentItem;
     url: string;
 }

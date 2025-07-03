@@ -1,4 +1,5 @@
 // Type for the Playlist DTO based on your JSON
+// src/types/models/playlist.ts
 export interface PlaylistDTO {
     id: number;
     name: string;

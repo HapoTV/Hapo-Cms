@@ -8,39 +8,35 @@ import apiService from './api.service'; // Use our central API client
  * @path src/services/s3.service.ts
  */
 
-// This interface is just for the pre-signed URL response from our backend.
-interface PresignedUrlResponse {
-  url: string;
-}
-
 /**
  * Uploads a file to AWS S3 using a pre-signed URL from our backend.
  * @param file The file to be uploaded.
+ * @param prefix The S3 folder/prefix to store the file in (e.g., 'audio/').
  * @param onProgress Callback function to track upload progress (0-100).
  * @returns The final, clean URL of the uploaded file on S3.
  */
 export const uploadFileToS3 = async (
   file: File,
+  prefix: string = 'uploads/', // Default prefix if none is provided
   onProgress?: (progress: number) => void
 ): Promise<string> => {
   try {
-    // 1️⃣ Get pre-signed URL from OUR backend.
-    // This call is authenticated and handled by apiService.
-    const response = await apiService.post<PresignedUrlResponse>(
-      `/s3/presigned-url`, // Assuming this is your backend endpoint
+    // We construct the full file name including the prefix.
+    const fullFileName = `${prefix}${file.name}`;
+
+    // 1️⃣ Get pre-signed URL from OUR backend, now with the full file name.
+    const response = await apiService.post<{ url: string }>(
+        `/s3/presigned-url`,
       null,
-      { params: { fileName: file.name, contentType: file.type } }
+        // The backend will generate a URL for the path 'prefix/fileName.ext'
+        {params: {fileName: fullFileName, contentType: file.type}}
     );
 
     const presignedUrl = response.url;
 
     // 2️⃣ Upload file directly to S3 using the pre-signed URL.
-    // This uses a raw axios.put because it's a request to AWS S3, not our API.
-    // It doesn't need our JWT token; authentication is handled by the URL's signature.
     await axios.put(presignedUrl, file, {
-      headers: {
-        'Content-Type': file.type,
-      },
+      headers: {'Content-Type': file.type},
       onUploadProgress: (progressEvent) => {
         if (onProgress && progressEvent.total) {
           const percentCompleted = Math.round(
@@ -51,7 +47,7 @@ export const uploadFileToS3 = async (
       },
     });
 
-    // 3️⃣ Return the base URL of the file, removing the temporary query parameters.
+    // 3️⃣ Return the base URL of the file.
     return presignedUrl.split('?')[0];
   } catch (error) {
     console.error('Upload error:', error);
@@ -67,14 +63,25 @@ export const uploadFileToS3 = async (
  */
 export const deleteFileFromS3 = async (fileKey: string): Promise<void> => {
   try {
-    // FIXED: Use apiService to ensure the request is authenticated.
-    await apiService.delete(`/s3/delete-object`, {
-      params: { fileKey },
-    });
-    console.log('File deleted successfully via backend.');
+    // 1. Get the presigned DELETE URL from our backend
+    console.log(`Requesting presigned DELETE URL for key: ${fileKey}`);
+    const response = await apiService.post<{ url: string }>(
+        '/s3/presigned-delete-url', // This matches your Spring Boot @PostMapping
+        null, // No body needed for this POST request
+        {params: {fileKey}}
+    );
+
+    const presignedDeleteUrl = response.url;
+    console.log(`Received presigned DELETE URL. Deleting from S3...`);
+
+    // 2. Use the received URL to perform the DELETE operation directly on S3
+    await axios.delete(presignedDeleteUrl);
+
+    console.log(`Successfully deleted ${fileKey} from S3.`);
   } catch (error) {
-    console.error('Delete error:', error);
-    const errorMessage = error instanceof Error ? error.message : "Failed to delete file from S3";
-    throw new Error(errorMessage);
+    console.error(`Failed to delete file from S3 with key: ${fileKey}`, error);
+    // Re-throw the error so the calling function in the store knows the operation failed.
+    throw new Error('Failed to delete file from S3.');
   }
 };
+

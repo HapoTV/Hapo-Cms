@@ -10,7 +10,7 @@ import axios, {AxiosInstance, AxiosRequestConfig} from 'axios';
 import {tokenService} from './token.service';
 import authService from './auth.service';
 
-const API_URL = 'https://hapo-cms.onrender.com';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 
 // This variable acts as a "gatekeeper" to prevent multiple refresh requests
 // from firing simultaneously (the "thundering herd" problem).

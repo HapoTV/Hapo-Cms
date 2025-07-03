@@ -2,7 +2,7 @@
 
 import apiService from './api.service';
 import type {Screen, ScreenConnectionStatus, ScreenStatus} from '../types/models/screen.types';
-import type {Content} from '../types/models/ContentItem.ts'; // Assuming you have a type for this
+import {ContentItem} from '../types/models/ContentItem.ts'; // Assuming you have a type for this
 import type {ScreenCreationPayload} from '../types/requests/screen.requests';
 
 // --- API & PAYLOAD TYPES ---
@@ -185,10 +185,10 @@ export const screensService = {
   /**
    * NEW: Sends new content data to a specific screen.
    * @param screenId The ID of the screen to update.
-   * @param content The content payload.
+   * @param contentItem The content payload.
    */
-  updateScreenContent: async (screenId: number, content: Content): Promise<void> => {
-    await apiService.post<ApiResponse<string>>(`/api/screens/${screenId}/content`, content);
+  updateScreenContent: async (screenId: number, contentItem: ContentItem): Promise<void> => {
+    await apiService.post<ApiResponse<string>>(`/api/screens/${screenId}/content`, contentItem);
   },
 };
 

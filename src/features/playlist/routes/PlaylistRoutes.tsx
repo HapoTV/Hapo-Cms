@@ -1,9 +1,8 @@
 // src/features/playlist/routes/PlaylistRoutes.tsx
 
-import React from 'react';
 import {Route, Routes} from 'react-router-dom';
 import PlaylistListPage from '../components/PlaylistListPage'; // <-- RENAMED
-import CreatePlaylistPage from '../components/PlaylistForm';
+import CreatePlaylistPage from '../components/CreatePlaylistPage';
 import PlaylistDetailsPage from '../components/PlaylistDetailsPage'; // <-- RENAMED
 
 export const PlaylistRoutes = () => {

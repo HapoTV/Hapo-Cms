@@ -13,6 +13,4 @@ export interface Playlist {
   };
   screenIds: number[];
   contentIds: number[];
-  createdAt?: string;
-  updatedAt?: string;
 }

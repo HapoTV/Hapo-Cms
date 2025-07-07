@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {forwardRef, useState} from 'react';
 
 // This simple mock of react-hook-form can live with the component that uses it.
 const useForm = (config) => {
@@ -22,7 +22,7 @@ const useForm = (config) => {
 };
 
 // This is now the ONLY component in this file.
-export const PlaylistForm = ({ onSubmit, initialData }) => {
+export const PlaylistForm = forwardRef(({onSubmit, initialData}, ref) => {
   const {register, handleSubmit} = useForm({
     defaultValues: {
       name: initialData?.name || '',
@@ -31,7 +31,7 @@ export const PlaylistForm = ({ onSubmit, initialData }) => {
 
   return (
       // We add a ref here so the parent can submit this form.
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <form ref={ref} onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Playlist Name</label>
           <input
@@ -45,4 +45,4 @@ export const PlaylistForm = ({ onSubmit, initialData }) => {
         <button type="submit" className="hidden">Submit</button>
       </form>
   );
-};
+});

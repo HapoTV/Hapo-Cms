@@ -8,7 +8,7 @@ import {Auth} from '../features/auth/routes/Auth';
 import {Dashboard} from '../features/dashboard/routes/Dashboard';
 import {ContentLibrary} from '../features/content/routes/ContentLibrary';
 import {CampaignManagement} from '../features/campaigns/routes/CampaignManagement';
-import {ScreensMonitoring} from '../features/screens/routes/ScreensMonitoring';
+import {ScreensRoutes} from '../features/screens/routes/ScreensRoutes.tsx';
 import {PlaylistRoutes} from '../features/playlist/routes/PlaylistRoutes';
 import {ScheduleRoutes} from '../features/schedules/routes/ScheduleRoutes';
 import {HelpCenter} from '../features/help/routes/HelpCenter';
@@ -33,7 +33,7 @@ export const AppRoutes = () => {
           <Route index element={<Dashboard />} />
           <Route path="content/*" element={<ContentLibrary />} />
           <Route path="campaigns/*" element={<CampaignManagement />} />
-          <Route path="screens/*" element={<ScreensMonitoring />} />
+              <Route path="screens/*" element={<ScreensRoutes/>}/>
           <Route path="schedules/*" element={<ScheduleRoutes />} />
           <Route path="playlists/*" element={<PlaylistRoutes/>}/>
               <Route path="help/*" element={<HelpCenter/>}/>

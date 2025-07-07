@@ -170,7 +170,7 @@ export default function CreatePlaylistPage() {
             <div className="px-6 py-8">
                 {/* Section 1: Playlist Details Form */}
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
-                    <div ref={formRef}><PlaylistForm onSubmit={handleCreatePlaylist} initialData={{}}/></div>
+                    <PlaylistForm ref={formRef} onSubmit={handleCreatePlaylist} initialData={{}}/>
                 </div>
 
                 {/* --- Section 2: Playlist Content Grid (with Drag-and-Drop) --- */}

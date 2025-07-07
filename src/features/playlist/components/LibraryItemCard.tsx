@@ -8,9 +8,14 @@ interface LibraryItemCardProps {
     onSelect: (item: ContentItem) => void;
 }
 
+const MUSIC_COVER_IMAGE_URL = 'https://placehold.co/400x400/2563eb/white?text=Audio';
+
 export const LibraryItemCard: React.FC<LibraryItemCardProps> = ({item, isSelected, onSelect}) => {
-    // Use album art as the thumbnail for audio, otherwise use the main URL.
-    const thumbnailUrl = (item.type === 'AUDIO' && item.metadata?.albumArtUrl) ? item.metadata.albumArtUrl : item.url;
+    // Use album art as the thumbnail for audio, or placeholder if not available
+    // For other types, use the main URL
+    const thumbnailUrl = item.type === 'AUDIO'
+        ? (item.metadata?.albumArtUrl || MUSIC_COVER_IMAGE_URL)
+        : item.url;
 
     return (
         <div
@@ -32,7 +37,19 @@ export const LibraryItemCard: React.FC<LibraryItemCardProps> = ({item, isSelecte
 
             <div className="h-full flex flex-col">
                 <div className="flex-1 bg-gray-100">
-                    <img src={thumbnailUrl} alt={item.name} className="w-full h-full object-cover"/>
+                    {item.type === 'VIDEO' ? (
+                        <div className="w-full h-full">
+                            <video
+                                src={`${item.url}#t=0.1`}
+                                className="w-full h-full object-cover"
+                                preload="metadata"
+                                muted
+                                playsInline
+                            />
+                        </div>
+                    ) : (
+                        <img src={thumbnailUrl} alt={item.name} className="w-full h-full object-cover"/>
+                    )}
                 </div>
                 <div className="p-2 bg-white border-t border-gray-200">
                     <p className="text-xs font-medium text-gray-700 truncate">{item.name}</p>

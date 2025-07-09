@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Mail, Lock, Loader } from 'lucide-react';
-import { useAuthStore } from '../../../store/auth/auth.store';
+import React, {useState} from 'react';
+import {useNavigate} from 'react-router-dom';
+import {Eye, EyeOff, Loader, Mail} from 'lucide-react';
+import {useAuthStore} from '../../../store/auth/auth.store';
 
 export const LoginForm = () => {
   const navigate = useNavigate();
@@ -10,6 +10,7 @@ export const LoginForm = () => {
     email: '',
     password: '',
   });
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -19,7 +20,7 @@ export const LoginForm = () => {
       await login(formData.email, formData.password);
       navigate('/');
     } catch (err) {
-      // Error is handled by the store
+      console.error('Failed to login:', err);
     }
   };
 
@@ -55,15 +56,26 @@ export const LoginForm = () => {
           <input
             id="password"
             name="password"
-            type="password"
+            type={showPassword ? "text" : "password"}
             autoComplete="current-password"
             required
             value={formData.password}
             onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-            className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+            className="appearance-none block w-full px-3 py-2 pr-10 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
           />
           <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
-            <Lock className="h-5 w-5 text-gray-400" />
+            <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="text-gray-400 hover:text-gray-600 focus:outline-none focus:text-gray-600"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+            >
+              {showPassword ? (
+                  <EyeOff className="h-5 w-5"/>
+              ) : (
+                  <Eye className="h-5 w-5"/>
+              )}
+            </button>
           </div>
         </div>
       </div>

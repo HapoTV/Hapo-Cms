@@ -1,9 +1,8 @@
 // src/services/screens.service.ts
 
 import apiService from './api.service';
-import type {Screen, ScreenConnectionStatus, ScreenStatus} from '../types/models/screen.types';
+import type {Screen, ScreenConnectionStatus, ScreenCreationPayload, ScreenStatus} from '../types/models/screen.types';
 import {ContentItem} from '../types/models/ContentItem.ts'; // Assuming you have a type for this
-import type {ScreenCreationPayload} from '../types/requests/screen.requests';
 
 // --- API & PAYLOAD TYPES ---
 
@@ -54,6 +53,7 @@ export const screensService = {
     const response = await apiService.get<ApiResponse<Screen[]>>('/api/screens/all');
     return response.data;
   },
+
 
   /**
    * Fetches a single screen by its unique ID.

@@ -93,3 +93,25 @@ export interface ScreenConnectionStatus {
     clientInfo: string;
     connected: boolean;
 }
+
+
+/**
+ * Represents the data payload required to create a new screen by linking it
+ * to a physical device via its unique screen code. This type mirrors the
+
+ * backend's `ScreenCreationDTO`.
+ */
+export interface ScreenCreationPayload {
+    /**
+     * The unique code displayed on the physical screen.
+     * Must be in the format XXXX-XXXX-XXXX.
+     * @example "A4B1-C9D2-E7F3"
+     */
+    screenCode: string;
+    name: string;
+    location: Location;
+    screenSettingsDTO?: ScreenSettings;
+    status?: ScreenStatus;
+    type?: ScreenType;
+    metadata?: Record<string, unknown>;
+}

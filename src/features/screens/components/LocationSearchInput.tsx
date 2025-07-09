@@ -1,6 +1,8 @@
+// NEW PATH: src/features/screens/components/LocationSearchInput.tsx
+
 import React, {useState} from 'react';
 import {Autocomplete, useJsApiLoader} from '@react-google-maps/api';
-import type {Location} from '../../../types/models/screen.types'; // Adjust path if needed
+import type {Location} from '../../../types/models/screen.types';
 
 interface LocationSearchInputProps {
     initialValue: string;
@@ -10,7 +12,7 @@ interface LocationSearchInputProps {
 const libraries: ('places')[] = ['places'];
 
 export const LocationSearchInput: React.FC<LocationSearchInputProps> = ({initialValue, onPlaceSelect}) => {
-    // Access the API key from your .env.local file
+    // Access the API key from your .env.local.local file
     const googleMapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
     const {isLoaded} = useJsApiLoader({
@@ -29,8 +31,8 @@ export const LocationSearchInput: React.FC<LocationSearchInputProps> = ({initial
         if (autocomplete !== null) {
             const place = autocomplete.getPlace();
 
-            // Gracefully handle cases where place details are not found
-            const name = place.formatted_address || '';
+            // REFINED LOGIC: Prioritize the place's common name, fallback to the address.
+            const name = place.name || place.formatted_address || '';
             const latitude = place.geometry?.location?.lat() || 0;
             const longitude = place.geometry?.location?.lng() || 0;
 
@@ -43,7 +45,7 @@ export const LocationSearchInput: React.FC<LocationSearchInputProps> = ({initial
 
     // Show a loading skeleton while the Google Maps script loads
     if (!isLoaded) {
-        return <div className="h-10 bg-gray-200 rounded-lg animate-pulse w-full"></div>;
+        return <div className="h-10 w-full animate-pulse rounded-lg bg-gray-200"></div>;
     }
 
     // Show a helpful error if the API key is missing
@@ -55,13 +57,12 @@ export const LocationSearchInput: React.FC<LocationSearchInputProps> = ({initial
         <Autocomplete
             onLoad={onLoad}
             onPlaceChanged={onPlaceChanged}
-            // Request only the fields you need to save costs
-            fields={["formatted_address", "geometry.location"]}
+            // UPDATED: Request the 'name' field to get business/landmark names.
+            fields={["name", "formatted_address", "geometry.location"]}
         >
             <input
                 type="text"
-                placeholder="Search for an address..."
-                // Use defaultValue so the user can immediately type to change it
+                placeholder="Search for a place or address..."
                 defaultValue={initialValue}
                 className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
             />

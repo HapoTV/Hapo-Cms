@@ -1,9 +1,8 @@
 // src/features/playlist/store/playlistDetails.store.ts
 
 import {create} from 'zustand';
-import {PlaylistDTO} from '../../../types/models/playlist'; // Assuming you have this
-import {ContentItem} from '../../../types/models/ContentItem';
-import {playlistService} from '../../../services/playlist.service';
+import {ContentItem, PlaylistDTO} from '../types';
+import {playlistService} from '../services/playlist.service';
 import {contentService} from '../../../services/content.service';
 import {toast} from 'react-toastify'; // Using a library like react-toastify is great for feedback
 

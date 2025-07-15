@@ -2,7 +2,7 @@
 
 import {create} from 'zustand';
 import {PlaylistDTO} from '../../../types/models/playlist.ts';
-import {playlistService} from '../../../services/playlist.service';
+import {playlistService} from '../services/playlist.service';
 
 // Define the shape of our state
 interface PlaylistState {

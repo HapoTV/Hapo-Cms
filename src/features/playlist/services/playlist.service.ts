@@ -1,7 +1,7 @@
-// src/services/playlist.service.ts
+// src/features/playlist/services/playlist.service.ts
 
-import apiService from './api.service';
-import type {ApiResponse, Page, PlaylistDTO} from '../types/models/playlist';
+import apiService from '../../../services/api.service';
+import {ApiResponse, Page, PlaylistDTO} from '../types';
 
 // The data type we expect from the /summaries endpoint
 type PaginatedPlaylistsResponse = ApiResponse<Page<PlaylistDTO>>;

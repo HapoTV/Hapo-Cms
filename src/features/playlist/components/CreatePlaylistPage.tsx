@@ -1,34 +1,40 @@
 import React, {useMemo, useRef, useState} from 'react';
-import {useNavigate} from 'react-router-dom';
-import {ChevronLeft, Plus, Save, Trash2} from 'lucide-react';
+import {ChevronLeft, Save} from 'lucide-react';
 import {toast} from 'react-toastify';
-import {DragDropContext, Draggable, Droppable, DropResult} from 'react-beautiful-dnd';
+import {DropResult} from 'react-beautiful-dnd';
 
 // Import services and types
-import {playlistService} from '../../../services/playlist.service';
-import {ContentItem} from '../../../types/models/ContentItem';
-import {PlaylistDTO} from '../../../types/models/playlist';
+import {playlistService} from '../services/playlist.service';
+import {ContentItem, PlaylistDTO} from '../types';
+
+// Import hooks
+import {usePlaylistNavigation} from '../hooks/usePlaylistNavigation';
+import {useMediaPlayerContext} from './MediaPlayerProvider';
 
 // Import the components this page uses
 import {PlaylistForm} from './PlaylistForm';
 import {PlaylistContentLibrary} from './PlaylistContentLibrary';
 import SetToScreenModal, {SetToScreenSaveData} from './SetToScreenModal';
+import {PlaylistItemGrid} from './PlaylistItemGrid';
 
 // Helper types and functions can live in the page component file
 type PlaylistItem = ContentItem & {
     duration: number;
     instanceId: string; // Changed to string to work with Draggable's ID requirement
 };
-const formatTime = (seconds: number): string => {
-    const m = String(Math.floor(seconds / 60)).padStart(2, '0');
-    const s = String(Math.floor(seconds % 60) || 0).padStart(2, '0');
-    return `${m}:${s}`;
-};
+
+// Helper function to format time is now provided by the useMediaPlayer hook
 
 // This is the complete, final version of the page component
 export default function CreatePlaylistPage() {
-    const navigate = useNavigate();
+    const {goToPlaylistsList, goToPlaylistDetails} = usePlaylistNavigation();
     const formRef = useRef<{ requestSubmit: () => void }>(null);
+
+    // Use the media player context
+    const {
+        currentlyPlaying, isPlaying, handlePlay, handlePause, setSelectedVideo,
+        formatTime, MUSIC_COVER_IMAGE_URL
+    } = useMediaPlayerContext();
 
     const [isSaving, setIsSaving] = useState(false);
     const [playlistItems, setPlaylistItems] = useState<PlaylistItem[]>([]);
@@ -76,8 +82,8 @@ export default function CreatePlaylistPage() {
         setPlaylistItems(reorderedItems);
     };
 
-    // --- Main Submission Handler ---
-    const handleCreatePlaylist = async (formData: { name: string }) => {
+    // Main Submission Handler
+    const handleCreatePlaylist = async (formData: { name: string; description?: string }) => {
         if (!formData.name) {
             toast.warn('Please provide a playlist name.');
             return;
@@ -113,6 +119,11 @@ export default function CreatePlaylistPage() {
             setNewlyCreatedPlaylist(response.data);
             setModalOpen(true);
 
+            // Navigate to the playlist details page
+            if (response.data.id) {
+                goToPlaylistDetails(response.data.id);
+            }
+
         } catch (err) {
             toast.error(`Failed to create playlist: ${err instanceof Error ? err.message : "Unknown error"}`);
         } finally {
@@ -120,11 +131,11 @@ export default function CreatePlaylistPage() {
         }
     };
 
-    // --- Handler for the Modal's Save Action ---
+    // Handler for the Modal's Save Action
     const handleSetToScreenSave = async (data: SetToScreenSaveData) => {
         if (!data.playlist || data.screenIds.length === 0) {
             // If the user saves without selecting screens, just navigate away
-            navigate('/playlists');
+            goToPlaylistsList();
             return;
         }
         try {
@@ -139,30 +150,42 @@ export default function CreatePlaylistPage() {
                 throw new Error(response.message || "Failed to publish playlist");
             }
             toast.success(`Playlist assigned to ${data.screenIds.length} screen(s).`);
-            navigate('/playlists'); // Navigate away on success
+
+            // Navigate to the playlist details page if we have an ID
+            if (data.playlist.id) {
+                goToPlaylistDetails(data.playlist.id);
+            } else {
+                goToPlaylistsList(); // Fallback to list page
+            }
         } catch (err) {
             toast.error(`Failed to assign to screens: ${err instanceof Error ? err.message : "Unknown error"}`);
         }
     };
 
-    // --- Derived State ---
+    // Derived State
     const totalDuration = useMemo(() => playlistItems.reduce((sum, item) => sum + item.duration, 0), [playlistItems]);
-    const padSlots = [...playlistItems, ...Array(Math.max(0, 10 - playlistItems.length)).fill(null)];
     const selectedLibraryItemIds = useMemo(() => new Set(playlistItems.map(p => p.id)), [playlistItems]);
 
     return (
         <div className="min-h-screen bg-gray-50">
-            {/* Header */}
+            {/* Header - Consistent with content library */}
             <div className="bg-white border-b border-gray-200 px-6 py-4 sticky top-0 z-20">
                 <div className="flex items-center justify-between">
-                    <button onClick={() => navigate('/playlists')}
-                            className="flex items-center text-gray-600 hover:text-gray-800"><ChevronLeft
-                        className="w-4 h-4 mr-1"/> All Playlists
+                    <button
+                        onClick={goToPlaylistsList}
+                        className="flex items-center text-gray-600 hover:text-gray-800 transition-colors"
+                    >
+                        <ChevronLeft className="w-4 h-4 mr-1"/>
+                        All Playlists
                     </button>
                     <h1 className="text-lg font-semibold text-gray-800">Create New Playlist</h1>
-                    <button onClick={() => formRef.current?.requestSubmit()} disabled={isSaving}
-                            className="flex items-center px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:opacity-50">
-                        <Save className="w-4 h-4 mr-2"/>{isSaving ? 'Saving...' : 'Save Playlist'}
+                    <button
+                        onClick={() => formRef.current?.requestSubmit()}
+                        disabled={isSaving}
+                        className="flex items-center px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                        <Save className="w-4 h-4 mr-2"/>
+                        {isSaving ? 'Saving...' : 'Save Playlist'}
                     </button>
                 </div>
             </div>
@@ -170,71 +193,26 @@ export default function CreatePlaylistPage() {
             <div className="px-6 py-8">
                 {/* Section 1: Playlist Details Form */}
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
+                    <h2 className="text-lg font-medium text-gray-900 mb-4">Playlist Details</h2>
                     <PlaylistForm ref={formRef} onSubmit={handleCreatePlaylist} initialData={{}}/>
                 </div>
 
-                {/* --- Section 2: Playlist Content Grid (with Drag-and-Drop) --- */}
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
-                    <div className="flex items-center justify-between mb-6">
-                        <h2 className="text-lg font-medium text-gray-900">Playlist Content (Drag to reorder)</h2>
-                        <span
-                            className="text-sm text-gray-600">Total duration <strong>{formatTime(totalDuration)}</strong></span>
-                    </div>
-                    <DragDropContext onDragEnd={onDragEnd}>
-                        <Droppable droppableId="playlist-slots" direction="horizontal">
-                            {(provided) => (
-                                <div ref={provided.innerRef} {...provided.droppableProps}
-                                     className="grid grid-cols-10 gap-4">
-                                    {padSlots.map((item, i) => (
-                                        item ? (
-                                            <Draggable key={item.instanceId} draggableId={item.instanceId} index={i}>
-                                                {(provided) => (
-                                                    <div
-                                                        ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}
-                                                        className="aspect-[3/4] border rounded-lg overflow-hidden bg-gray-50 flex items-center justify-center">
-                                                        <div className="h-full w-full flex flex-col relative">
-                                                            <div className="flex-1 bg-gray-100">
-                                                                <img src={item.metadata?.albumArtUrl || item.url}
-                                                                     alt={item.name}
-                                                                     className="w-full h-full object-cover"/>
-                                                                <button
-                                                                    onClick={() => removeItemFromPlaylist(item.instanceId)}
-                                                                    className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600">
-                                                                    <Trash2 className="w-3 h-3"/></button>
-                                                            </div>
-                                                            <div className="p-2 bg-white flex flex-col">
-                                                                <div
-                                                                    className="text-xs font-medium text-gray-700 truncate mb-1">{item.name}</div>
-                                                                <div className="flex items-center justify-between">
-                                                                    <button
-                                                                        onClick={() => updateItemDuration(item.instanceId, -1)}
-                                                                        className="w-6 h-6 flex items-center justify-center bg-gray-100 rounded hover:bg-gray-200">-
-                                                                    </button>
-                                                                    <span>{item.duration}"</span>
-                                                                    <button
-                                                                        onClick={() => updateItemDuration(item.instanceId, 1)}
-                                                                        className="w-6 h-6 flex items-center justify-center bg-gray-100 rounded hover:bg-gray-200">+
-                                                                    </button>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                )}
-                                            </Draggable>
-                                        ) : (
-                                            <div key={`empty-${i}`}
-                                                 className="aspect-[3/4] border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center text-gray-400">
-                                                <Plus className="w-6 h-6 mb-1"/>
-                                                <span className="text-xs">Empty</span>
-                                            </div>
-                                        )
-                                    ))}
-                                    {provided.placeholder}
-                                </div>
-                            )}
-                        </Droppable>
-                    </DragDropContext>
-                </div>
+                {/* Section 2: Playlist Content Grid */}
+                <PlaylistItemGrid
+                    items={playlistItems}
+                    isEditMode={true}
+                    onDragEnd={onDragEnd}
+                    onRemoveItem={removeItemFromPlaylist}
+                    onUpdateDuration={updateItemDuration}
+                    onPlay={handlePlay}
+                    onPause={handlePause}
+                    onVideoOpen={setSelectedVideo}
+                    currentlyPlaying={currentlyPlaying}
+                    isPlaying={isPlaying}
+                    musicCoverImageUrl={MUSIC_COVER_IMAGE_URL}
+                    formatTime={formatTime}
+                    totalDuration={totalDuration}
+                />
 
                 {/* Section 3: Content Library */}
                 <PlaylistContentLibrary
@@ -243,10 +221,10 @@ export default function CreatePlaylistPage() {
                 />
             </div>
 
-            {/* The "Set to Screen" Modal that appears after successful save */}
+            {/* Set to Screen Modal */}
             <SetToScreenModal
                 isOpen={isModalOpen}
-                onClose={() => navigate('/playlists')} // If user closes, just navigate away
+                onClose={goToPlaylistsList}
                 playlist={newlyCreatedPlaylist}
                 onSave={handleSetToScreenSave}
             />

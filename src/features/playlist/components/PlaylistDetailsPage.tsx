@@ -1,32 +1,30 @@
 // src/features/playlist/components/PlaylistDetailsPage.tsx
 
 import React, {useEffect, useRef, useState} from 'react';
-import {Link, useParams} from 'react-router-dom';
-import {ChevronLeft, Edit, Loader2, Plus, Save, Send, Trash2} from 'lucide-react';
+import {ChevronLeft, Edit, Loader2, Save, Send} from 'lucide-react';
 import {toast} from 'react-toastify';
-import {DragDropContext, Draggable, Droppable, DropResult} from 'react-beautiful-dnd';
+import {DropResult} from 'react-beautiful-dnd';
 
 import {usePlaylistDetailsStore} from '../store/playlistDetails.store';
-import {playlistService} from '../../../services/playlist.service';
+import {playlistService} from '../services/playlist.service';
+import {usePlaylistNavigation} from '../hooks/usePlaylistNavigation';
+import {useMediaPlayerContext} from './MediaPlayerProvider';
 
 import SetToScreenModal, {SetToScreenSaveData} from './SetToScreenModal';
 import {PlaylistForm} from './PlaylistForm';
 import {PlaylistContentLibrary} from './PlaylistContentLibrary';
+import {PlaylistItemGrid} from './PlaylistItemGrid';
 
-
-// A pure helper function for formatting time
-const formatTime = (seconds: number): string => {
-    const m = String(Math.floor(seconds / 60)).padStart(2, '0');
-    const s = String(seconds % 60).padStart(2, '0');
-    return `${m}:${s}`;
-};
-
-// Placeholder for audio items without album art
-const MUSIC_COVER_IMAGE_URL = 'https://placehold.co/400x400/2563eb/white?text=Audio';
 
 export default function PlaylistDetailsPage() {
-    const {id: playlistId} = useParams<{ id: string }>();
+    const {playlistId, goToPlaylistsList} = usePlaylistNavigation();
     const formRef = useRef<{ requestSubmit: () => void }>(null);
+
+    // Use the media player context
+    const {
+        currentlyPlaying, isPlaying, handlePlay, handlePause, setSelectedVideo,
+        formatTime, MUSIC_COVER_IMAGE_URL
+    } = useMediaPlayerContext();
 
     // State for the modal
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -102,8 +100,6 @@ export default function PlaylistDetailsPage() {
         }
     };
 
-    // Create an array of 10 slots, filled with items or null
-    const padSlots = [...items, ...Array(Math.max(0, 10 - items.length)).fill(null)];
 
     // --- Conditional rendering for loading/error states ---
     if (isLoading) {
@@ -119,9 +115,12 @@ export default function PlaylistDetailsPage() {
             {/* Header */}
             <div className="bg-white border-b border-gray-200 px-6 py-4 sticky top-0 z-20">
                 <div className="flex items-center justify-between">
-                    <Link to="/playlists" className="flex items-center text-gray-600 hover:text-gray-800">
+                    <button
+                        onClick={goToPlaylistsList}
+                        className="flex items-center text-gray-600 hover:text-gray-800 transition-colors"
+                    >
                         <ChevronLeft className="w-4 h-4 mr-1"/> All Playlists
-                    </Link>
+                    </button>
                     <h1 className="text-lg font-semibold text-gray-800">
                         {isEditMode ? 'Edit Playlist' : (playlist?.name || 'Playlist Details')}
                     </h1>
@@ -181,108 +180,21 @@ export default function PlaylistDetailsPage() {
                 </div>
 
                 {/* Section 2: Playlist Content Grid (with Drag-and-Drop) */}
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
-                    <div className="flex items-center justify-between mb-6">
-                        <h2 className="text-lg font-medium text-gray-900">
-                            {isEditMode ? 'Playlist Content (Drag to reorder)' : 'Playlist Content'}
-                        </h2>
-                        <span className="text-sm text-gray-600">
-                            Total duration <strong>{formatTime(totalDuration)}</strong>
-                        </span>
-                    </div>
-
-                    <DragDropContext onDragEnd={onDragEnd}>
-                        <Droppable droppableId="playlist-slots" direction="horizontal">
-                            {(provided) => (
-                                <div
-                                    ref={provided.innerRef}
-                                    {...provided.droppableProps}
-                                    className="grid grid-cols-10 gap-4"
-                                >
-                                    {padSlots.map((item, i) => (
-                                        item ? (
-                                            <Draggable
-                                                key={`item-${item.id}`}
-                                                draggableId={`item-${item.id}`}
-                                                index={i}
-                                                isDragDisabled={!isEditMode}
-                                            >
-                                                {(provided) => (
-                                                    <div
-                                                        ref={provided.innerRef}
-                                                        {...provided.draggableProps}
-                                                        {...provided.dragHandleProps}
-                                                        className="aspect-[3/4] border rounded-lg overflow-hidden bg-gray-50"
-                                                    >
-                                                        <div className="h-full w-full flex flex-col relative">
-                                                            <div className="flex-1 bg-gray-100">
-                                                                {item.type === 'VIDEO' ? (
-                                                                    <div className="w-full h-full">
-                                                                        <video
-                                                                            src={`${item.url}#t=0.1`}
-                                                                            className="w-full h-full object-cover"
-                                                                            preload="metadata"
-                                                                            muted
-                                                                            playsInline
-                                                                        />
-                                                                    </div>
-                                                                ) : (
-                                                                    <img
-                                                                        src={item.type === 'AUDIO'
-                                                                            ? (item.metadata?.albumArtUrl || MUSIC_COVER_IMAGE_URL)
-                                                                            : item.url}
-                                                                        alt={item.name}
-                                                                        className="w-full h-full object-cover"
-                                                                    />
-                                                                )}
-                                                                <button
-                                                                    onClick={() => removeItem(item.id)}
-                                                                    className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
-                                                                >
-                                                                    <Trash2 className="w-3 h-3"/>
-                                                                </button>
-                                                            </div>
-                                                            <div className="p-2 bg-white flex flex-col">
-                                                                <div
-                                                                    className="text-xs font-medium text-gray-700 truncate mb-1">
-                                                                    {item.name}
-                                                                </div>
-                                                                <div className="flex items-center justify-between">
-                                                                    <button
-                                                                        onClick={() => updateItemDuration(item.id, -1)}
-                                                                        className="w-6 h-6 flex items-center justify-center bg-gray-100 rounded hover:bg-gray-200"
-                                                                    >
-                                                                        -
-                                                                    </button>
-                                                                    <span>{item.duration}"</span>
-                                                                    <button
-                                                                        onClick={() => updateItemDuration(item.id, 1)}
-                                                                        className="w-6 h-6 flex items-center justify-center bg-gray-100 rounded hover:bg-gray-200"
-                                                                    >
-                                                                        +
-                                                                    </button>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                )}
-                                            </Draggable>
-                                        ) : (
-                                            <div
-                                                key={`empty-${i}`}
-                                                className="aspect-[3/4] border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center text-gray-400"
-                                            >
-                                                <Plus className="w-6 h-6 mb-1"/>
-                                                <span className="text-xs">Empty</span>
-                                            </div>
-                                        )
-                                    ))}
-                                    {provided.placeholder}
-                                </div>
-                            )}
-                        </Droppable>
-                    </DragDropContext>
-                </div>
+                <PlaylistItemGrid
+                    items={items}
+                    isEditMode={isEditMode}
+                    onDragEnd={onDragEnd}
+                    onRemoveItem={removeItem}
+                    onUpdateDuration={updateItemDuration}
+                    onPlay={handlePlay}
+                    onPause={handlePause}
+                    onVideoOpen={setSelectedVideo}
+                    currentlyPlaying={currentlyPlaying}
+                    isPlaying={isPlaying}
+                    musicCoverImageUrl={MUSIC_COVER_IMAGE_URL}
+                    formatTime={formatTime}
+                    totalDuration={totalDuration}
+                />
 
                 {/* Section 3: Content Library */}
                 <PlaylistContentLibrary

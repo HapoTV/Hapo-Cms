@@ -170,7 +170,7 @@ export const ScheduleDetailsModal: React.FC<ScheduleDetailsModalProps> = ({
                 name="name"
                 value={formData.name || ''}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                 required
               />
             </div>
@@ -183,7 +183,7 @@ export const ScheduleDetailsModal: React.FC<ScheduleDetailsModalProps> = ({
                 name="priority"
                 value={formData.priority || 'NORMAL'}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
               >
                 <option value="LOW">Low</option>
                 <option value="NORMAL">Normal</option>
@@ -201,7 +201,7 @@ export const ScheduleDetailsModal: React.FC<ScheduleDetailsModalProps> = ({
               name="description"
               value={formData.description || ''}
               onChange={handleInputChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
               rows={3}
             />
           </div>
@@ -222,7 +222,7 @@ export const ScheduleDetailsModal: React.FC<ScheduleDetailsModalProps> = ({
                     startDate: date.toISOString()
                   }));
                 }}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                 required
               />
             </div>
@@ -242,7 +242,7 @@ export const ScheduleDetailsModal: React.FC<ScheduleDetailsModalProps> = ({
                     endDate: date.toISOString()
                   }));
                 }}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                 required
               />
             </div>

@@ -40,7 +40,7 @@ export const PaginationControls: React.FC<PaginationControlsProps> = ({
                 <button
                     onClick={handlePrevious}
                     disabled={currentPage === 1}
-                    className="flex items-center gap-1 px-3 py-1.5 border border-gray-300 rounded-md bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex items-center gap-1 px-3 py-1.5 border border-gray-300 rounded-lg bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     <ChevronLeft className="w-4 h-4"/>
                     Previous
@@ -48,7 +48,7 @@ export const PaginationControls: React.FC<PaginationControlsProps> = ({
                 <button
                     onClick={handleNext}
                     disabled={currentPage === totalPages}
-                    className="flex items-center gap-1 px-3 py-1.5 border border-gray-300 rounded-md bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex items-center gap-1 px-3 py-1.5 border border-gray-300 rounded-lg bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     Next
                     <ChevronRight className="w-4 h-4"/>

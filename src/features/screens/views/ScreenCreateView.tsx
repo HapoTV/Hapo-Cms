@@ -9,7 +9,7 @@ export const ScreenCreateView = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     // This is the only logic this view needs: what to do with the final data.
-    const handleCreateScreen = async (payload) => {
+    const handleCreateScreen = async (payload: import('../../../types/models/screen.types').ScreenCreationDTO) => {
         setIsSubmitting(true);
         try {
             await screensService.createScreenFromCode(payload);

@@ -2,10 +2,9 @@
 
 import React from 'react';
 import {Link, useNavigate, useParams} from 'react-router-dom';
-import {ChevronLeft, Edit, Loader2, Monitor} from 'lucide-react';
+import {ChevronLeft, Edit, Loader2, MapPin, Monitor, Settings} from 'lucide-react';
 
 import {ScreenStatusBadge} from '../components/ScreenStatusBadge';
-import {ScreenInfo} from '../components/screensDetails/ScreenInfo.tsx';
 import {ConnectionStatus} from '../components/screensDetails/ConnectionStatus.tsx';
 import {LocationSection} from '../components/screensDetails/LocationSection.tsx';
 import {ScreenSettingsForm} from '../components/screensDetails/ScreenSettingsForm.tsx';
@@ -107,32 +106,65 @@ export const ScreenDetailsView = () => {
                     </div>
                 </div>
 
-                {/* Main content area - optimized for full screen */}
+                {/* Main content area - fixed for laptop screens */}
                 <div className="max-w-7xl mx-auto px-6 py-8">
-                    <div className="grid grid-cols-12 gap-8 min-h-[calc(100vh-200px)]">
-                        {/* Left Column - Screen Info & Location (4 columns) */}
-                        <div className="col-span-12 lg:col-span-4 space-y-6">
-                            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 h-fit">
-                                <ScreenInfo screen={screen}/>
+                    <div className="grid grid-cols-1 gap-8 min-h-[600px]">
+                        {/* Unified Card - Contains all information */}
+                        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                            <div className="grid grid-cols-2 gap-8 mb-8">
+                                {/* Left Side - Screen Info */}
+                                <div>
+                                    <h2 className="text-lg font-medium text-gray-900 mb-4 flex items-center gap-2">
+                                        <Monitor className="w-5 h-5 text-blue-500"/>
+                                        Screen Details
+                                    </h2>
+                                    <div className="space-y-4">
+                                        <div
+                                            className="flex items-center justify-between py-2 border-b border-gray-100">
+                                            <div className="flex items-center gap-2">
+                                                <MapPin className="w-4 h-4 text-gray-400"/>
+                                                <span className="text-sm text-gray-600">Location</span>
+                                            </div>
+                                            <span className="text-sm font-medium text-gray-900">
+                                                {screen.location?.name || 'Not specified'}
+                                            </span>
+                                        </div>
+                                        <div
+                                            className="flex items-center justify-between py-2 border-b border-gray-100">
+                                            <div className="flex items-center gap-2">
+                                                <Settings className="w-4 h-4 text-gray-400"/>
+                                                <span className="text-sm text-gray-600">Resolution</span>
+                                            </div>
+                                            <span className="text-sm font-medium text-gray-900">
+                                                {screen.metadata?.resolution || 'Default'}
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center justify-between py-2">
+                                            <div className="flex items-center gap-2">
+                                                <Monitor className="w-4 h-4 text-gray-400"/>
+                                                <span className="text-sm text-gray-600">Type</span>
+                                            </div>
+                                            <span className="text-sm font-medium text-gray-900">{screen.type}</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="mt-6">
+                                        <h2 className="text-lg font-medium text-gray-900 mb-4">Connection Status</h2>
+                                        <ConnectionStatus activity={activity} activityError={activityError}/>
+                                    </div>
+                                </div>
+
+                                {/* Right Side - Location */}
+                                <div>
+                                    <div>
+                                        <h2 className="text-lg font-medium text-gray-900 mb-4">Location</h2>
+                                        <LocationSection screen={screen} googleMapsApiKey={googleMapsApiKey}/>
+                                    </div>
+                                </div>
                             </div>
 
-                            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 h-fit">
-                                <h2 className="text-lg font-medium text-gray-900 mb-4">Location</h2>
-                                <LocationSection screen={screen} googleMapsApiKey={googleMapsApiKey}/>
-                            </div>
-                        </div>
-
-                        {/* Middle Column - Connection Status (3 columns) */}
-                        <div className="col-span-12 lg:col-span-3">
-                            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 h-fit">
-                                <h2 className="text-lg font-medium text-gray-900 mb-4">Connection Status</h2>
-                                <ConnectionStatus activity={activity} activityError={activityError}/>
-                            </div>
-                        </div>
-
-                        {/* Right Column - Settings Form (5 columns) */}
-                        <div className="col-span-12 lg:col-span-5">
-                            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                            {/* Settings Section - Full Width */}
+                            <div>
                                 <h2 className="text-lg font-medium text-gray-900 mb-6">Display Settings</h2>
 
                                 {settingsLoading ? (

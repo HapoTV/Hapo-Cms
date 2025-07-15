@@ -174,6 +174,9 @@ export const ScreenForm: React.FC<ScreenFormProps> = ({onFormSubmit, isEditMode,
                 {/* Screen Settings Section */}
                 <div className="border-t border-gray-200 pt-6">
                     <ScreenSettings/>
+                    <div className="mt-6">
+                        <MetadataEditor name="screenSettingsDTO.settingsMetadata" title="Screen Settings Metadata"/>
+                    </div>
                 </div>
 
                 {/* Submit Button */}

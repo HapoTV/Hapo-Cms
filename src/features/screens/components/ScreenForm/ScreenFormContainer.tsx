@@ -34,7 +34,7 @@ export const ScreenFormContainer: React.FC<ScreenFormContainerProps> = ({
                 loop: initialData?.screenSettingsDTO?.loop ?? true,
                 cacheMedia: initialData?.screenSettingsDTO?.cacheMedia ?? true,
                 fallbackToCache: initialData?.screenSettingsDTO?.fallbackToCache ?? true,
-                metadata: fromObject(initialData?.screenSettingsDTO?.settingsMetadata),
+                settingsMetadata: fromObject(initialData?.screenSettingsDTO?.settingsMetadata),
             },
         },
     });

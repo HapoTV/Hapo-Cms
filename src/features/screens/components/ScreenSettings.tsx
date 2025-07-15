@@ -55,7 +55,7 @@ export const ScreenSettings: React.FC = () => {
                     <label className="flex items-center gap-3">
                         <input
                             type="checkbox"
-                            {...register(`${basePath}.metadata.autoPlay`)}
+                            {...register(`${basePath}.settingsMetadata.autoPlay`)}
                             className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
                         />
                         <span className="text-sm text-gray-700">Auto-play content</span>
@@ -75,11 +75,11 @@ export const ScreenSettings: React.FC = () => {
                             type="range"
                             min="0"
                             max="100"
-                            {...register(`${basePath}.metadata.brightness`)}
+                            {...register(`${basePath}.settingsMetadata.brightness`)}
                             className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
                         />
-                        {settingsErrors.metadata?.brightness && (
-                            <p className="mt-1 text-sm text-red-600">{settingsErrors.metadata.brightness.message}</p>
+                        {settingsErrors.settingsMetadata?.brightness && (
+                            <p className="mt-1 text-sm text-red-600">{settingsErrors.settingsMetadata.brightness.message}</p>
                         )}
                     </div>
                     <div>
@@ -90,11 +90,11 @@ export const ScreenSettings: React.FC = () => {
                             type="range"
                             min="0"
                             max="100"
-                            {...register(`${basePath}.metadata.contrast`)}
+                            {...register(`${basePath}.settingsMetadata.contrast`)}
                             className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
                         />
-                        {settingsErrors.metadata?.contrast && (
-                            <p className="mt-1 text-sm text-red-600">{settingsErrors.metadata.contrast.message}</p>
+                        {settingsErrors.settingsMetadata?.contrast && (
+                            <p className="mt-1 text-sm text-red-600">{settingsErrors.settingsMetadata.contrast.message}</p>
                         )}
                     </div>
                     <div>
@@ -105,11 +105,11 @@ export const ScreenSettings: React.FC = () => {
                             type="number"
                             min="0"
                             step="0.5"
-                            {...register(`${basePath}.metadata.transitionDuration`)}
+                            {...register(`${basePath}.settingsMetadata.transitionDuration`)}
                             className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                         />
-                        {settingsErrors.metadata?.transitionDuration && (
-                            <p className="mt-1 text-sm text-red-600">{settingsErrors.metadata.transitionDuration.message}</p>
+                        {settingsErrors.settingsMetadata?.transitionDuration && (
+                            <p className="mt-1 text-sm text-red-600">{settingsErrors.settingsMetadata.transitionDuration.message}</p>
                         )}
                     </div>
                 </div>
@@ -126,18 +126,18 @@ export const ScreenSettings: React.FC = () => {
                         <input
                             type="number"
                             min="1"
-                            {...register(`${basePath}.metadata.updateInterval`)}
+                            {...register(`${basePath}.settingsMetadata.updateInterval`)}
                             className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                         />
-                        {settingsErrors.metadata?.updateInterval && (
-                            <p className="mt-1 text-sm text-red-600">{settingsErrors.metadata.updateInterval.message}</p>
+                        {settingsErrors.settingsMetadata?.updateInterval && (
+                            <p className="mt-1 text-sm text-red-600">{settingsErrors.settingsMetadata.updateInterval.message}</p>
                         )}
                     </div>
                     <div className="space-y-3">
                         <label className="flex items-center gap-3">
                             <input
                                 type="checkbox"
-                                {...register(`${basePath}.metadata.offlineMode`)}
+                                {...register(`${basePath}.settingsMetadata.offlineMode`)}
                                 className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
                             />
                             <span className="text-sm text-gray-700">Enable offline mode</span>
@@ -145,7 +145,7 @@ export const ScreenSettings: React.FC = () => {
                         <label className="flex items-center gap-3">
                             <input
                                 type="checkbox"
-                                {...register(`${basePath}.metadata.powerSaving`)}
+                                {...register(`${basePath}.settingsMetadata.powerSaving`)}
                                 className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
                             />
                             <span className="text-sm text-gray-700">Enable power saving mode</span>
@@ -164,18 +164,18 @@ export const ScreenSettings: React.FC = () => {
                         </label>
                         <input
                             type="time"
-                            {...register(`${basePath}.metadata.restartTime`)}
+                            {...register(`${basePath}.settingsMetadata.restartTime`)}
                             className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                         />
-                        {settingsErrors.metadata?.restartTime && (
-                            <p className="mt-1 text-sm text-red-600">{settingsErrors.metadata.restartTime.message}</p>
+                        {settingsErrors.settingsMetadata?.restartTime && (
+                            <p className="mt-1 text-sm text-red-600">{settingsErrors.settingsMetadata.restartTime.message}</p>
                         )}
                     </div>
                     <div className="flex items-center">
                         <label className="flex items-center gap-3">
                             <input
                                 type="checkbox"
-                                {...register(`${basePath}.metadata.autoUpdate`)}
+                                {...register(`${basePath}.settingsMetadata.autoUpdate`)}
                                 className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
                             />
                             <span className="text-sm text-gray-700">Enable automatic updates</span>

@@ -9,13 +9,13 @@ export const screenSettingsSchema = z.object({
   fallbackToCache: z.boolean(),
 
   // The flexible metadata container
-  metadata: z.object({
+    settingsMetadata: z.object({
     // Backend-required metadata fields
     brightness: z.coerce.number().min(0).max(100),
     volume: z.coerce.number().min(0).max(100),
     powerSaving: z.boolean(),
 
-    // Our "extra" frontend-specific settings, now stored inside metadata
+        // Our "extra" frontend-specific settings, now stored inside settingsMetadata
     contrast: z.coerce.number().min(0).max(100),
     autoPlay: z.boolean(),
     transitionDuration: z.coerce.number().min(0),
@@ -36,7 +36,7 @@ export const defaultScreenSettings: ScreenSettings = {
   fallbackToCache: true,
 
   // Metadata defaults
-  metadata: {
+    settingsMetadata: {
     brightness: 90,
     volume: 0,
     powerSaving: true,

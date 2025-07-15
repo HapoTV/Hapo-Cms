@@ -31,8 +31,8 @@ export const ScreenSettingsForm: React.FC<ScreenSettingsFormProps> = ({
     });
 
     // Watch brightness and volume for a real-time display
-    const brightness = watch('metadata.brightness');
-    const volume = watch('metadata.volume');
+    const brightness = watch('settingsMetadata.brightness');
+    const volume = watch('settingsMetadata.volume');
 
     // Reset form when settings change
     useEffect(() => {
@@ -60,7 +60,7 @@ export const ScreenSettingsForm: React.FC<ScreenSettingsFormProps> = ({
     };
 
     return (
-        <div className="max-h-[calc(100vh-300px)] overflow-y-auto pr-2">
+        <div className="w-full pr-2">
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                 {/* Playback Settings */}
                 <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6 border border-blue-100">
@@ -68,7 +68,7 @@ export const ScreenSettingsForm: React.FC<ScreenSettingsFormProps> = ({
                         <Settings className="w-5 h-5"/>
                         Playback Settings
                     </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 gap-4">
                         <label
                             className="flex items-center gap-3 p-3 bg-white rounded-lg border border-blue-100 hover:bg-blue-50 transition-colors cursor-pointer">
                             <input
@@ -109,7 +109,7 @@ export const ScreenSettingsForm: React.FC<ScreenSettingsFormProps> = ({
                             className="flex items-center gap-3 p-3 bg-white rounded-lg border border-blue-100 hover:bg-blue-50 transition-colors cursor-pointer">
                             <input
                                 type="checkbox"
-                                {...register('metadata.autoPlay')}
+                                {...register('settingsMetadata.autoPlay')}
                                 className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
                             />
                             <div>
@@ -125,7 +125,7 @@ export const ScreenSettingsForm: React.FC<ScreenSettingsFormProps> = ({
                     <h3 className="text-lg font-medium text-purple-900 mb-4">Display Settings</h3>
 
                     {/* Sliders Row */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                    <div className="grid grid-cols-3 gap-6 mb-6">
                         <div className="bg-white p-4 rounded-lg border border-purple-100">
                             <label className="block text-sm font-medium text-gray-700 mb-3">
                                 Brightness: <span className="text-purple-600 font-semibold">{brightness}%</span>
@@ -134,15 +134,15 @@ export const ScreenSettingsForm: React.FC<ScreenSettingsFormProps> = ({
                                 type="range"
                                 min="0"
                                 max="100"
-                                {...register('metadata.brightness')}
+                                {...register('settingsMetadata.brightness')}
                                 className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider accent-purple-500"
                             />
                             <div className="flex justify-between text-xs text-gray-500 mt-1">
                                 <span>0%</span>
                                 <span>100%</span>
                             </div>
-                            {errors.metadata?.brightness && (
-                                <p className="mt-1 text-sm text-red-600">{errors.metadata.brightness.message}</p>
+                            {errors.settingsMetadata?.brightness && (
+                                <p className="mt-1 text-sm text-red-600">{errors.settingsMetadata.brightness.message}</p>
                             )}
                         </div>
 
@@ -154,47 +154,28 @@ export const ScreenSettingsForm: React.FC<ScreenSettingsFormProps> = ({
                                 type="range"
                                 min="0"
                                 max="100"
-                                {...register('metadata.volume')}
+                                {...register('settingsMetadata.volume')}
                                 className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider accent-purple-500"
                             />
                             <div className="flex justify-between text-xs text-gray-500 mt-1">
                                 <span>Mute</span>
                                 <span>Max</span>
                             </div>
-                            {errors.metadata?.volume && (
-                                <p className="mt-1 text-sm text-red-600">{errors.metadata.volume.message}</p>
+                            {errors.settingsMetadata?.volume && (
+                                <p className="mt-1 text-sm text-red-600">{errors.settingsMetadata.volume.message}</p>
                             )}
                         </div>
 
-                        <div className="bg-white p-4 rounded-lg border border-purple-100">
-                            <label className="block text-sm font-medium text-gray-700 mb-3">
-                                Brightness: <span className="text-purple-600 font-semibold">{brightness}%</span>
-                            </label>
-                            <input
-                                type="range"
-                                min="0"
-                                max="100"
-                                {...register('metadata.brightness')}
-                                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider accent-purple-500"
-                            />
-                            <div className="flex justify-between text-xs text-gray-500 mt-1">
-                                <span>Low</span>
-                                <span>High</span>
-                            </div>
-                            {errors.metadata?.brightness && (
-                                <p className="mt-1 text-sm text-red-600">{errors.metadata.brightness.message}</p>
-                            )}
-                        </div>
                     </div>
 
                     {/* Dropdowns and Inputs Row */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-3 gap-4">
                         <div className="bg-white p-4 rounded-lg border border-purple-100">
                             <label className="block text-sm font-medium text-gray-700 mb-2">
                                 Resolution
                             </label>
                             <select
-                                {...register('metadata.resolution')}
+                                {...register('settingsMetadata.resolution')}
                                 className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:border-purple-500 focus:ring-1 focus:ring-purple-500"
                             >
                                 {SUPPORTED_RESOLUTIONS.map(res => (
@@ -210,7 +191,7 @@ export const ScreenSettingsForm: React.FC<ScreenSettingsFormProps> = ({
                                 Refresh Rate
                             </label>
                             <select
-                                {...register('metadata.refreshRate')}
+                                {...register('settingsMetadata.refreshRate')}
                                 className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:border-purple-500 focus:ring-1 focus:ring-purple-500"
                             >
                                 {SUPPORTED_REFRESH_RATES.map(rate => (
@@ -230,13 +211,13 @@ export const ScreenSettingsForm: React.FC<ScreenSettingsFormProps> = ({
                                     type="number"
                                     min="0"
                                     step="0.5"
-                                    {...register('metadata.transitionDuration')}
+                                    {...register('settingsMetadata.transitionDuration')}
                                     className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:border-purple-500 focus:ring-1 focus:ring-purple-500"
                                 />
                                 <span className="text-sm text-gray-500">sec</span>
                             </div>
-                            {errors.metadata?.transitionDuration && (
-                                <p className="mt-1 text-sm text-red-600">{errors.metadata.transitionDuration.message}</p>
+                            {errors.settingsMetadata?.transitionDuration && (
+                                <p className="mt-1 text-sm text-red-600">{errors.settingsMetadata.transitionDuration.message}</p>
                             )}
                         </div>
                     </div>
@@ -245,7 +226,7 @@ export const ScreenSettingsForm: React.FC<ScreenSettingsFormProps> = ({
                 {/* Device & Network Settings */}
                 <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-6 border border-green-100">
                     <h3 className="text-lg font-medium text-green-900 mb-4">Device & Network</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-2 gap-6">
                         <div className="bg-white p-4 rounded-lg border border-green-100">
                             <label className="block text-sm font-medium text-gray-700 mb-2">
                                 Update Interval
@@ -254,13 +235,13 @@ export const ScreenSettingsForm: React.FC<ScreenSettingsFormProps> = ({
                                 <input
                                     type="number"
                                     min="1"
-                                    {...register('metadata.updateInterval')}
+                                    {...register('settingsMetadata.updateInterval')}
                                     className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:border-green-500 focus:ring-1 focus:ring-green-500"
                                 />
                                 <span className="text-sm text-gray-500">min</span>
                             </div>
-                            {errors.metadata?.updateInterval && (
-                                <p className="mt-1 text-sm text-red-600">{errors.metadata.updateInterval.message}</p>
+                            {errors.settingsMetadata?.updateInterval && (
+                                <p className="mt-1 text-sm text-red-600">{errors.settingsMetadata.updateInterval.message}</p>
                             )}
                         </div>
 
@@ -268,7 +249,7 @@ export const ScreenSettingsForm: React.FC<ScreenSettingsFormProps> = ({
                             <label className="flex items-center gap-3 cursor-pointer">
                                 <input
                                     type="checkbox"
-                                    {...register('metadata.offlineMode')}
+                                    {...register('settingsMetadata.offlineMode')}
                                     className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500 focus:ring-2"
                                 />
                                 <div>
@@ -279,7 +260,7 @@ export const ScreenSettingsForm: React.FC<ScreenSettingsFormProps> = ({
                             <label className="flex items-center gap-3 cursor-pointer">
                                 <input
                                     type="checkbox"
-                                    {...register('metadata.powerSaving')}
+                                    {...register('settingsMetadata.powerSaving')}
                                     className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500 focus:ring-2"
                                 />
                                 <div>
@@ -294,18 +275,18 @@ export const ScreenSettingsForm: React.FC<ScreenSettingsFormProps> = ({
                 {/* Maintenance Settings */}
                 <div className="bg-gradient-to-r from-orange-50 to-yellow-50 rounded-lg p-6 border border-orange-100">
                     <h3 className="text-lg font-medium text-orange-900 mb-4">Maintenance</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-2 gap-6">
                         <div className="bg-white p-4 rounded-lg border border-orange-100">
                             <label className="block text-sm font-medium text-gray-700 mb-2">
                                 Daily Restart Time
                             </label>
                             <input
                                 type="time"
-                                {...register('metadata.restartTime')}
+                                {...register('settingsMetadata.restartTime')}
                                 className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
                             />
-                            {errors.metadata?.restartTime && (
-                                <p className="mt-1 text-sm text-red-600">{errors.metadata.restartTime.message}</p>
+                            {errors.settingsMetadata?.restartTime && (
+                                <p className="mt-1 text-sm text-red-600">{errors.settingsMetadata.restartTime.message}</p>
                             )}
                         </div>
 
@@ -313,7 +294,7 @@ export const ScreenSettingsForm: React.FC<ScreenSettingsFormProps> = ({
                             <label className="flex items-center gap-3 cursor-pointer">
                                 <input
                                     type="checkbox"
-                                    {...register('metadata.autoUpdate')}
+                                    {...register('settingsMetadata.autoUpdate')}
                                     className="w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500 focus:ring-2"
                                 />
                                 <div>

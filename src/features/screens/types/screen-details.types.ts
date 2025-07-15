@@ -2,15 +2,14 @@
 
 import {z} from 'zod';
 // Import types from existing files
-import type {Screen, ScreenConnectionStatus} from '../../../types/models/screen.types';
-import type {ScreenSettings} from '../types/settings';
+import type {Screen, ScreenConnectionStatus, ScreenSettingsDTO} from '../../../types/models/screen.types';
 
 // Form validation schema
 export const settingsFormSchema = z.object({
     loop: z.boolean(),
     cacheMedia: z.boolean(),
     fallbackToCache: z.boolean(),
-    metadata: z.object({
+    settingsMetadata: z.object({
         brightness: z.coerce.number().min(0).max(100),
         volume: z.coerce.number().min(0).max(100),
         powerSaving: z.boolean(),
@@ -61,10 +60,9 @@ export interface LocationSectionProps {
 }
 
 export interface ScreenSettingsFormProps {
-    settings: ScreenSettings;
+    settings: ScreenSettingsDTO;
     onSave: (data: SettingsFormData) => Promise<void>;
     onReset: () => Promise<void>;
     isSaving: boolean;
     saveStatus: 'idle' | 'success' | 'error';
 }
-

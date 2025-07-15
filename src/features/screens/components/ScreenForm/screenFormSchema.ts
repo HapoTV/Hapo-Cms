@@ -1,5 +1,4 @@
 import {z} from 'zod';
-import {screenSettingsSchema} from '../../types/settings';
 
 const metadataEntrySchema = z.object({
     label: z.string().min(1, 'Label is required'),
@@ -24,7 +23,16 @@ export const screenFormSchema = z.object({
             message: 'Metadata labels must be unique.',
         })
         .optional(),
-    screenSettingsDTO: screenSettingsSchema,
+    screenSettingsDTO: z.object({
+        loop: z.boolean(),
+        cacheMedia: z.boolean(),
+        fallbackToCache: z.boolean(),
+        settingsMetadata: z.array(metadataEntrySchema)
+            .refine(uniqueLabel('Settings metadata labels must be unique.'), {
+                message: 'Settings metadata labels must be unique.',
+            })
+            .optional(),
+    }),
 }).superRefine((data, ctx) => {
     // Dynamically require screenCode only if it exists on the object (i.e., in create mode)
     if (data.screenCode !== undefined && !/^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/i.test(data.screenCode)) {
@@ -59,7 +67,7 @@ export const transformToPayload = (data: z.infer<typeof screenFormSchema>): {
             loop: data.screenSettingsDTO.loop,
             cacheMedia: data.screenSettingsDTO.cacheMedia,
             fallbackToCache: data.screenSettingsDTO.fallbackToCache,
-            settingsMetadata: toObject(data.screenSettingsDTO.metadata),
+            settingsMetadata: toObject(data.screenSettingsDTO.settingsMetadata),
         }
     };
 };

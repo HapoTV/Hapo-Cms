@@ -1,11 +1,15 @@
-import React, {useMemo, useRef, useState} from 'react';
-import {ChevronLeft, Save} from 'lucide-react';
+// src/features/playlist/components/CreatePlaylistPage.tsx
+
+import {useMemo, useRef, useState} from 'react';
+import {ChevronLeft, Save, Music} from 'lucide-react';
 import {toast} from 'react-toastify';
 import {DropResult} from 'react-beautiful-dnd';
 
 // Import services and types
 import {playlistService} from '../services/playlist.service';
-import {ContentItem, PlaylistDTO} from '../types';
+import {ContentItem} from '../types';
+import { SpotifyTrack } from '../../../types/models/Spotify';
+import { PlaylistDTO } from '../../../types/models/playlist';
 
 // Import hooks
 import {usePlaylistNavigation} from '../hooks/usePlaylistNavigation';
@@ -16,16 +20,17 @@ import {PlaylistForm} from './PlaylistForm';
 import {PlaylistContentLibrary} from './PlaylistContentLibrary';
 import SetToScreenModal, {SetToScreenSaveData} from './SetToScreenModal';
 import {PlaylistItemGrid} from './PlaylistItemGrid';
+import { SpotifyLibrary } from './SpotifyLibrary';
 
 // Helper types and functions can live in the page component file
 type PlaylistItem = ContentItem & {
     duration: number;
-    instanceId: string; // Changed to string to work with Draggable's ID requirement
+    instanceId: string;
+    isSpotify?: boolean;
+    spotifyData?: any;
+    thumbnailUrl?: string;
 };
 
-// Helper function to format time is now provided by the useMediaPlayer hook
-
-// This is the complete, final version of the page component
 export default function CreatePlaylistPage() {
     const {goToPlaylistsList, goToPlaylistDetails} = usePlaylistNavigation();
     const formRef = useRef<{ requestSubmit: () => void }>(null);
@@ -38,13 +43,15 @@ export default function CreatePlaylistPage() {
 
     const [isSaving, setIsSaving] = useState(false);
     const [playlistItems, setPlaylistItems] = useState<PlaylistItem[]>([]);
+    const [showSpotifyLibrary, setShowSpotifyLibrary] = useState(false);
+    const [addedSpotifyTracks, setAddedSpotifyTracks] = useState<Set<string>>(new Set());
 
     // State for the "Set to Screen" modal
     const [isModalOpen, setModalOpen] = useState(false);
     const [newlyCreatedPlaylist, setNewlyCreatedPlaylist] = useState<PlaylistDTO | null>(null);
 
-    const addContentToPlaylist = (item: ContentItem) => {
-        if (playlistItems.some(p => p.id === item.id)) {
+    const addContentToPlaylist = (item: ContentItem, duration: number = 30) => {
+        if (playlistItems.some(p => p.id === item.id && !p.isSpotify)) {
             toast.info(`"${item.name}" is already in the playlist.`);
             return;
         }
@@ -54,35 +61,89 @@ export default function CreatePlaylistPage() {
         }
         const newItem: PlaylistItem = {
             ...item,
-            duration: item.metadata?.duration || 30,
-            instanceId: `${item.id}-${Date.now()}`, // Unique string ID
+            duration: duration,
+            instanceId: `${item.id}-${Date.now()}`,
+            isSpotify: false,
+            playOrder: playlistItems.length // Set playOrder based on current position
         };
         setPlaylistItems(prev => [...prev, newItem]);
     };
 
-    const removeItemFromPlaylist = (instanceIdToRemove: string) => {
-        setPlaylistItems(prev => prev.filter(p => p.instanceId !== instanceIdToRemove));
+    const addSpotifyTrackToPlaylist = (spotifyTrack: SpotifyTrack) => {
+        if (playlistItems.some(p => p.spotifyData?.id === spotifyTrack.id && p.isSpotify)) {
+            toast.info(`"${spotifyTrack.name}" is already in the playlist.`);
+            return;
+        }
+        if (playlistItems.length >= 10) {
+            toast.warn('Playlist is full (10 items maximum).');
+            return;
+        }
+        
+        const spotifyItem: PlaylistItem = {
+            id: Date.now(), // Temporary ID for frontend use only
+            name: spotifyTrack.name,
+            type: 'music',
+            duration: Math.floor(spotifyTrack.duration_ms / 1000),
+            instanceId: `spotify-${spotifyTrack.id}-${Date.now()}`,
+            isSpotify: true,
+            playOrder: playlistItems.length, // Set playOrder based on current position
+            spotifyData: {
+                id: spotifyTrack.id,
+                uri: spotifyTrack.uri,
+                album: spotifyTrack.album,
+                artists: spotifyTrack.artists,
+                preview_url: spotifyTrack.preview_url,
+                external_urls: spotifyTrack.external_urls
+            },
+            thumbnailUrl: spotifyTrack.album.images[0]?.url || MUSIC_COVER_IMAGE_URL
+        };
+        
+        setPlaylistItems(prev => [...prev, spotifyItem]);
+        setAddedSpotifyTracks(prev => new Set(prev).add(spotifyTrack.id));
+        toast.success(`"${spotifyTrack.name}" added to playlist`);
     };
 
-    const updateItemDuration = (instanceIdToUpdate: string, change: number) => {
+    const removeItemFromPlaylist = (itemId: string | number) => {
+        const instanceIdToRemove = String(itemId);
+        const itemToRemove = playlistItems.find(p => p.instanceId === instanceIdToRemove);
+        
+        setPlaylistItems(prev => prev.filter(p => p.instanceId !== instanceIdToRemove));
+        
+        // Remove from added Spotify tracks if it was a Spotify track
+        if (itemToRemove?.isSpotify && itemToRemove.spotifyData?.id) {
+            setAddedSpotifyTracks(prev => {
+                const newSet = new Set(prev);
+                newSet.delete(itemToRemove.spotifyData.id);
+                return newSet;
+            });
+        }
+    };
+
+    const updateItemDuration = (itemId: string | number, change: number) => {
+        const instanceIdToUpdate = String(itemId);
         setPlaylistItems(prev => prev.map(p =>
             p.instanceId === instanceIdToUpdate ? {...p, duration: Math.max(1, p.duration + change)} : p
         ));
     };
 
-    // --- Drag-and-Drop Handler ---
     const onDragEnd = (result: DropResult) => {
         const {source, destination} = result;
-        if (!destination) return; // Dropped outside the list
+        if (!destination) return;
 
         const reorderedItems = Array.from(playlistItems);
         const [removed] = reorderedItems.splice(source.index, 1);
         reorderedItems.splice(destination.index, 0, removed);
 
-        setPlaylistItems(reorderedItems);
+        // Update playOrder for all items after reordering
+        const updatedItems = reorderedItems.map((item, index) => ({
+            ...item,
+            playOrder: index
+        }));
+
+        setPlaylistItems(updatedItems);
     };
 
-    // Main Submission Handler
+
     const handleCreatePlaylist = async (formData: { name: string; description?: string }) => {
         if (!formData.name) {
             toast.warn('Please provide a playlist name.');
@@ -95,80 +156,141 @@ export default function CreatePlaylistPage() {
 
         setIsSaving(true);
         try {
+            // Prepare playlist items with proper order and structure
+            const playlistItemsPayload = playlistItems.map((item, index) => {
+    const baseItem = {
+        playOrder: index,
+        name: item.name,
+        duration: item.duration,
+        thumbnailUrl: item.thumbnailUrl
+    };
+
+    if (item.isSpotify) {
+        return {
+            ...baseItem,
+            type: 'spotify',
+            spotifyId: item.spotifyData?.id,
+            spotifyTrackName: item.spotifyData?.name,
+            spotifyArtistName: item.spotifyData?.artists?.map(a => a.name).join(', '),
+            spotifyDurationMs: item.spotifyData?.duration_ms,
+            spotifyPreviewUrl: item.spotifyData?.preview_url,
+            spotifyImageUrl: item.spotifyData?.album?.images?.[0]?.url,
+            isSpotifyContent: true
+        };
+    } else {
+        return {
+            ...baseItem,
+            type: 'content',
+            contentId: item.id,
+            contentType: item.type,
+            url: item.url,
+            metadata: item.metadata,
+            isSpotifyContent: false
+        };
+    }
+});
+
+            const totalPlaylistDuration = playlistItems.reduce((sum, item) => sum + item.duration, 0);
+
             const payload: Omit<PlaylistDTO, 'id'> = {
                 name: formData.name,
-                // The order is preserved here from the state
-                contentIds: playlistItems.map(p => p.id),
-                // Add any other default metadata your backend might need
+                description: formData.description,
+                playlistItems: playlistItemsPayload,
+                contentIds: playlistItems
+                    .filter(item => !item.isSpotify)
+                    .map(item => item.id)
+                    .filter((id): id is number => id !== undefined),
                 playlistData: {
-                    totalDuration: totalDuration,
+                    duration: totalPlaylistDuration,
                     loop: false,
                     transition: 'fade',
                 },
                 screenIds: [],
                 screenPlaylistQueues: []
             };
+
+            console.log('Creating playlist with payload:', JSON.stringify(payload, null, 2));
+
             const response = await playlistService.createPlaylist(payload);
             if (!response.success || !response.data) {
                 throw new Error(response.message || "Failed to create playlist");
             }
 
             toast.success(`Playlist "${formData.name}" created!`);
-
-            // Set the new playlist and open the modal for screen assignment
             setNewlyCreatedPlaylist(response.data);
             setModalOpen(true);
 
-            // Navigate to the playlist details page
-            if (response.data.id) {
-                goToPlaylistDetails(response.data.id);
-            }
-
         } catch (err) {
+            console.error('Playlist creation error:', err);
             toast.error(`Failed to create playlist: ${err instanceof Error ? err.message : "Unknown error"}`);
         } finally {
             setIsSaving(false);
         }
     };
 
-    // Handler for the Modal's Save Action
     const handleSetToScreenSave = async (data: SetToScreenSaveData) => {
         if (!data.playlist || data.screenIds.length === 0) {
-            // If the user saves without selecting screens, just navigate away
+            // If no screens selected, just go to playlists list
             goToPlaylistsList();
             return;
         }
         try {
-            // Create a modified playlist object with the selected screen IDs and publish type
-            const playlistToPublish: PlaylistDTO & { publishType?: string } = {
-                ...data.playlist,
-                screenIds: data.screenIds,
-                publishType: data.type
-            };
+            const playlistToPublish = {
+            ...data.playlist,
+            screenIds: data.screenIds,
+            publishType: data.type
+            } as PlaylistDTO & { publishType?: string };
+
             const response = await playlistService.publishPlaylist(playlistToPublish);
             if (!response.success) {
                 throw new Error(response.message || "Failed to publish playlist");
             }
             toast.success(`Playlist assigned to ${data.screenIds.length} screen(s).`);
 
-            // Navigate to the playlist details page if we have an ID
+            // Navigate to the details page after successful screen assignment
             if (data.playlist.id) {
                 goToPlaylistDetails(data.playlist.id);
             } else {
-                goToPlaylistsList(); // Fallback to list page
+                goToPlaylistsList();
             }
         } catch (err) {
             toast.error(`Failed to assign to screens: ${err instanceof Error ? err.message : "Unknown error"}`);
+            // Even if screen assignment fails, navigate to details page since playlist was created
+            if (data.playlist?.id) {
+                goToPlaylistDetails(data.playlist.id);
+            } else {
+                goToPlaylistsList();
+            }
         }
     };
 
-    // Derived State
+    const handleModalClose = () => {
+        // When modal closes without screen assignment, navigate to the newly created playlist details
+        if (newlyCreatedPlaylist?.id) {
+            goToPlaylistDetails(newlyCreatedPlaylist.id);
+        } else {
+            goToPlaylistsList();
+        }
+    };
+
+    const handleSpotifyTrackSelect = (spotifyTrack: SpotifyTrack) => {
+        addSpotifyTrackToPlaylist(spotifyTrack);
+    };
+
     const totalDuration = useMemo(() => playlistItems.reduce((sum, item) => sum + item.duration, 0), [playlistItems]);
-    const selectedLibraryItemIds = useMemo(() => new Set(playlistItems.map(p => p.id)), [playlistItems]);
+    
+    // Only consider regular content items for the library selection
+    const selectedLibraryItemIds = useMemo(() => 
+        new Set(playlistItems
+            .filter(item => !item.isSpotify)
+            .map(p => p.id)
+            .filter((id): id is number => id !== undefined)), 
+        [playlistItems]
+    );
 
     return (
         <div className="min-h-screen bg-gray-50">
-            {/* Header - Consistent with content library */}
+            {/* Header */}
             <div className="bg-white border-b border-gray-200 px-6 py-4 sticky top-0 z-20">
                 <div className="flex items-center justify-between">
                     <button
@@ -219,12 +341,33 @@ export default function CreatePlaylistPage() {
                     selectedItemIds={selectedLibraryItemIds}
                     onItemSelect={addContentToPlaylist}
                 />
+
+                {/* Section 4: Spotify Library (Separate Section) */}
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
+                    <div className="flex items-center justify-between mb-4">
+                        <h2 className="text-xl font-semibold text-gray-900">Add Music from Spotify</h2>
+                        <button
+                            onClick={() => setShowSpotifyLibrary(!showSpotifyLibrary)}
+                            className="flex items-center px-3 py-1.5 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+                        >
+                            <Music className="w-4 h-4 mr-1" />
+                            {showSpotifyLibrary ? 'Hide Spotify' : 'Browse Spotify'}
+                        </button>
+                    </div>
+
+                    {showSpotifyLibrary && (
+                        <SpotifyLibrary
+                            selectedItemIds={addedSpotifyTracks} // Use the set of added Spotify track IDs
+                            onItemSelect={handleSpotifyTrackSelect}
+                        />
+                    )}
+                </div>
             </div>
 
             {/* Set to Screen Modal */}
             <SetToScreenModal
                 isOpen={isModalOpen}
-                onClose={goToPlaylistsList}
+                onClose={handleModalClose}
                 playlist={newlyCreatedPlaylist}
                 onSave={handleSetToScreenSave}
             />

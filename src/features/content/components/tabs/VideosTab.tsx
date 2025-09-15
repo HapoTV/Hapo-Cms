@@ -42,7 +42,7 @@ export const VideosTab = () => {
                             </div>
                         </div>
                         <div className="absolute top-2 right-2">
-                            <button onClick={() => setOpenDropdownId(openDropdownId === video.id ? null : video.id)}
+                            <button onClick={() => setOpenDropdownId(openDropdownId === video.id ? null : video.id!)}
                                     className="p-1.5 bg-white/70 rounded-full hover:bg-white/100">
                                 <MoreVertical size={20}/>
                             </button>

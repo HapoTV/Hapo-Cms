@@ -45,7 +45,7 @@ export const screensService = {
 
   // === Core CRUD Operations ===
 
-  /**
+  /**f
    * Fetches all registered screens from the backend.
    * @returns A promise that resolves to an array of Screen objects.
    */

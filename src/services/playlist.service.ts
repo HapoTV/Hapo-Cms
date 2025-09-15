@@ -1,7 +1,7 @@
 // src/services/playlist.service.ts
 
 import apiService from './api.service';
-import type {ApiResponse, Page, PlaylistDTO} from '../types/models/playlist';
+import type {ApiResponse, Page, PlaylistDTO, PlaylistItemDTO} from '../types/models/playlist';
 
 // The data type we expect from the /summaries endpoint
 type PaginatedPlaylistsResponse = ApiResponse<Page<PlaylistDTO>>;
@@ -16,7 +16,21 @@ export const playlistService = {
      * Corresponds to: POST /api/playlists
      */
     createPlaylist: async (playlist: Omit<PlaylistDTO, 'id'>): Promise<ApiResponse<PlaylistDTO>> => {
-        return apiService.post<ApiResponse<PlaylistDTO>>('/api/playlists', playlist);
+        try {
+            const response = await apiService.post<ApiResponse<PlaylistDTO>>('/api/playlists', playlist);
+            
+            // Log the response for debugging
+            console.log('Playlist creation response:', response);
+            
+            if (!response.success) {
+                throw new Error(response.message || 'Failed to create playlist');
+            }
+            
+            return response;
+        } catch (error) {
+            console.error('Playlist creation error:', error);
+            throw error;
+        }
     },
 
     /**
@@ -38,12 +52,9 @@ export const playlistService = {
 
     /**
      * Updates the core details of a playlist (e.g., name, description).
-     * NOTE: This follows the REST standard. Your Java controller must be updated.
-     * Change `@PatchMapping("/update")` to `@PatchMapping("/{id}")`.
      * Corresponds to: PATCH /api/playlists/{id}
      */
     updatePlaylist: async (playlist: PlaylistDTO): Promise<ApiResponse<PlaylistDTO>> => {
-        // The ID must be part of the URL for a PATCH/PUT request.
         if (!playlist.id) throw new Error("Playlist ID is required for update.");
         return apiService.patch<ApiResponse<PlaylistDTO>>(`/api/playlists/${playlist.id}`, playlist);
     },
@@ -69,8 +80,12 @@ export const playlistService = {
      * Adds a single content item to the end of a playlist.
      * Corresponds to: POST /api/playlists/{playlistId}/items/{contentId}
      */
-    addItemToPlaylist: async (playlistId: number, contentId: number): Promise<ApiResponse<PlaylistDTO>> => {
-        return apiService.post<ApiResponse<PlaylistDTO>>(`/api/playlists/${playlistId}/items/${contentId}`);
+    addItemToPlaylist: async (playlistId: number, contentId: number, duration?: number): Promise<ApiResponse<PlaylistDTO>> => {
+        const url = `/api/playlists/${playlistId}/items/${contentId}`;
+        if (duration !== undefined) {
+            return apiService.post<ApiResponse<PlaylistDTO>>(`${url}?duration=${duration}`);
+        }
+        return apiService.post<ApiResponse<PlaylistDTO>>(url);
     },
 
     /**

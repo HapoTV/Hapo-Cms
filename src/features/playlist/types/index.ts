@@ -54,6 +54,7 @@ export interface ApiResponse<T> {
 
 // Content Item interface for media content
 export interface ContentItem {
+    thumbnailUrl?: string;
     id?: number; // Make id optional for creating new content
     name: string;
     type: string;

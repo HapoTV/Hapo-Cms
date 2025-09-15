@@ -8,6 +8,7 @@ import {toast} from 'react-toastify'; // Using a library like react-toastify is 
 
 // A PlaylistItem is a full Content object with a specific duration for this playlist.
 export interface PlaylistItem extends ContentItem {
+    thumbnailUrl: string;
     // The playlist might override the default duration of the content
     duration: number;
 }
@@ -45,46 +46,51 @@ const calculateTotalDuration = (items: PlaylistItem[]) => {
 export const usePlaylistDetailsStore = create<PlaylistDetailsState & PlaylistDetailsActions>((set, get) => ({
     ...initialState,
 
-    fetchPlaylistDetails: async (id: number) => {
-        set({...initialState, isLoading: true});
-        try {
-            // Step 1: Fetch the main playlist object
-            const playlistResponse = await playlistService.getPlaylistById(id);
-            if (!playlistResponse.success || !playlistResponse.data) throw new Error(playlistResponse.message);
+    // src/features/playlist/store/playlistDetails.store.ts
 
-            const playlist = playlistResponse.data;
-            let finalItems: PlaylistItem[] = [];
+fetchPlaylistDetails: async (id: number) => {
+    set({...initialState, isLoading: true});
+    try {
+        // Step 1: Fetch the main playlist object
+        const playlistResponse = await playlistService.getPlaylistById(id);
+        if (!playlistResponse.success || !playlistResponse.data) throw new Error(playlistResponse.message);
 
-            // Step 2: If there are content IDs, fetch the corresponding content
-            if (playlist.contentIds && playlist.contentIds.length > 0) {
-                // Assuming contentService has a method to fetch multiple items by their IDs
-                const contentResponse = await contentService.getContentsByIds(playlist.contentIds);
-                if (!contentResponse.success) throw new Error(contentResponse.message);
+        const playlist = playlistResponse.data;
+        let finalItems: PlaylistItem[] = [];
 
-                const contentMap = new Map(contentResponse.data.map(c => [c.id, c]));
-
-                // BUG FIX: The result of .map was being assigned to a local `items`, not `finalItems`.
-                finalItems = playlist.contentIds.map(contentId => {
-                    const content = contentMap.get(contentId);
-                    if (!content) return null;
-                    return {...content, duration: content.defaultDuration || 10};
-                }).filter((item): item is PlaylistItem => item !== null);
-            }
-
-            set({
-                playlist,
-                items: finalItems, // Use the correctly populated array
-                isLoading: false,
-                totalDuration: calculateTotalDuration(finalItems),
-            });
-        } catch (error) {
-            const message = error instanceof Error ? error.message : 'An unknown error occurred.';
-            set({
-                isLoading: false,
-                error: message
-            });
+        // Step 2: If there are content IDs, fetch the corresponding content
+        if (playlist.contentIds && playlist.contentIds.length > 0) {
+            // Use Promise.all to fetch all content items individually
+            const contentPromises = playlist.contentIds.map(contentId => 
+                contentService.getContentById(contentId)
+            );
+            
+            const contentResults = await Promise.allSettled(contentPromises);
+            
+            finalItems = contentResults
+                .filter(result => result.status === 'fulfilled')
+                .map(result => (result as PromiseFulfilledResult<ContentItem>).value)
+                .map(content => ({
+                    ...content,
+                    duration: content.defaultDuration || 10,
+                    thumbnailUrl: content.thumbnailUrl || ''
+                }));
         }
-    },
+
+        set({
+            playlist,
+            items: finalItems,
+            isLoading: false,
+            totalDuration: calculateTotalDuration(finalItems),
+        });
+    } catch (error) {
+        const message = error instanceof Error ? error.message : 'An unknown error occurred.';
+        set({
+            isLoading: false,
+            error: message
+        });
+    }
+},
 
     // NEW ACTION: To save the changes back to the server
     savePlaylist: async () => {

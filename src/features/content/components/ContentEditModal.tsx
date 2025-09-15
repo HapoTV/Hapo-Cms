@@ -1,32 +1,21 @@
 import { useEffect, useState } from 'react';
 import { FileText, Music, Plus, Trash2, X } from 'lucide-react';
-import { UploadingFile } from '../store/upload.store';
-import { getCategoryFromMime } from '../util/fileTypeUtils';
+import { ContentItem } from '../../../types/models/ContentItem';
 
-interface MetadataFormData {
-  name: string;
-  type: string;
-  duration?: number;
-  tags: Record<string, string>;
-  metadata: Record<string, unknown>;
-  campaignId?: number;
-  screenIds?: number[];
-}
-
-interface ContentMetadataModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSave: (data: MetadataFormData) => Promise<void>;
-  file: UploadingFile | null;
-}
-
-type TagItem = {
+interface TagItem {
   id: string;
   key: string;
   value: string;
-};
+}
 
-export const ContentMetadataModal = ({ isOpen, onClose, onSave, file }: ContentMetadataModalProps) => {
+interface ContentEditModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSave: (data: ContentItem) => Promise<void>;
+  contentItem: ContentItem | null;
+}
+
+export const ContentEditModal = ({ isOpen, onClose, onSave, contentItem }: ContentEditModalProps) => {
   const [name, setName] = useState('');
   const [duration, setDuration] = useState<number | ''>('');
   const [artist, setArtist] = useState('');
@@ -38,22 +27,29 @@ export const ContentMetadataModal = ({ isOpen, onClose, onSave, file }: ContentM
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (isOpen && file) {
-      const initialName = file.extractedMetadata?.title || file.file.name.replace(/\.[^/.]+$/, "");
-      const initialDuration = file.extractedMetadata?.duration;
-      const initialArtist = file.extractedMetadata?.artist || '';
-      const initialAlbum = file.extractedMetadata?.album || '';
+    if (isOpen && contentItem) {
+      setName(contentItem.name);
+      setDuration(contentItem.duration || '');
+      setArtist(contentItem.metadata?.artist as string || '');
+      setAlbum(contentItem.metadata?.album as string || '');
       
-      setName(initialName);
-      setDuration(initialDuration ? Math.round(initialDuration) : '');
-      setArtist(initialArtist);
-      setAlbum(initialAlbum);
-      setTagList([{id: Date.now().toString(), key: '', value: ''}]);
-      setScreenIds([]);
-      setCampaignId('');
+      // Convert tags object to array
+      const tags = contentItem.tags || {};
+      setTagList(
+        Object.keys(tags).length > 0 
+          ? Object.entries(tags).map(([key, value]) => ({
+              id: Date.now().toString(),
+              key,
+              value
+            }))
+          : [{id: Date.now().toString(), key: '', value: ''}]
+      );
+
+      setScreenIds(contentItem.screenIds || []);
+      setCampaignId(contentItem.campaignId || '');
       setError(null);
     }
-  }, [isOpen, file]);
+  }, [isOpen, contentItem]);
 
   const handleTagChange = (id: string, field: 'key' | 'value', text: string) => {
     setTagList(currentTags =>
@@ -80,8 +76,8 @@ export const ContentMetadataModal = ({ isOpen, onClose, onSave, file }: ContentM
       return;
     }
 
-    if (!file || !file.backendFileType) {
-      setError('File information is missing');
+    if (!contentItem) {
+      setError('Content information is missing');
       return;
     }
 
@@ -94,33 +90,24 @@ export const ContentMetadataModal = ({ isOpen, onClose, onSave, file }: ContentM
       }
     });
 
-    const metadata: Record<string, unknown> = {
-      ...(file.extractedMetadata && {
-        originalTitle: file.extractedMetadata.title,
-        artist: file.extractedMetadata.artist,
-        album: file.extractedMetadata.album,
-        duration: file.extractedMetadata.duration
-      })
-    };
-
-    // Only include artist/album in metadata if they were edited
-    if (artist.trim()) metadata.artist = artist.trim();
-    if (album.trim()) metadata.album = album.trim();
-
-    const formData: MetadataFormData = {
+    const updatedContent: ContentItem = {
+      ...contentItem,
       name: name.trim(),
-      type: file.backendFileType,
       duration: Number(duration) || undefined,
-      tags: finalTags,
       screenIds: screenIds.length > 0 ? screenIds : undefined,
       campaignId: campaignId ? Number(campaignId) : undefined,
-      metadata
+      tags: finalTags,
+      metadata: {
+        ...contentItem.metadata,
+        artist: artist.trim(),
+        album: album.trim()
+      }
     };
 
     try {
       setIsSaving(true);
       setError(null);
-      await onSave(formData);
+      await onSave(updatedContent);
     } catch (err) {
       console.error('Save failed:', err);
       setError('Failed to save content. Please try again.');
@@ -130,20 +117,19 @@ export const ContentMetadataModal = ({ isOpen, onClose, onSave, file }: ContentM
   };
 
   const renderPreview = () => {
-    if (!file) return null;
+    if (!contentItem) return null;
 
-    const previewUrl = file.albumArtUrl || file.url;
-    const fileCategory = getCategoryFromMime(file.file.type);
+    const previewUrl = contentItem.thumbnailUrl || contentItem.url;
+    const fileCategory = contentItem.type;
 
-    if (fileCategory === 'IMAGE' || (fileCategory === 'AUDIO' && file.albumArtUrl)) {
+    if (fileCategory === 'IMAGE' || (fileCategory === 'AUDIO' && contentItem.thumbnailUrl)) {
       return <img src={previewUrl} alt="Content Preview"
                   className="w-full h-full object-cover rounded-md bg-gray-100"/>;
     }
     if (fileCategory === 'VIDEO') {
-      return <video src={file.url} controls className="w-full h-full object-contain rounded-md bg-black"/>;
+      return <video src={contentItem.url} controls className="w-full h-full object-contain rounded-md bg-black"/>;
     }
 
-    // Fallback for audio without album art, or documents
     const Icon = fileCategory === 'AUDIO' ? Music : FileText;
     return (
         <div className="w-full h-full flex flex-col items-center justify-center bg-gray-100 rounded-md text-gray-500">
@@ -153,7 +139,7 @@ export const ContentMetadataModal = ({ isOpen, onClose, onSave, file }: ContentM
     );
   };
 
-  if (!isOpen || !file) {
+  if (!isOpen || !contentItem) {
     return null;
   }
 
@@ -162,7 +148,7 @@ export const ContentMetadataModal = ({ isOpen, onClose, onSave, file }: ContentM
       <div className="bg-white rounded-lg shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col">
         {/* Modal Header */}
         <div className="flex items-center justify-between p-4 border-b">
-          <h2 className="text-xl font-semibold text-gray-800">Content Metadata</h2>
+          <h2 className="text-xl font-semibold text-gray-800">Edit Content</h2>
           <button 
             onClick={onClose} 
             className="p-1 rounded-full text-gray-500 hover:bg-gray-100"
@@ -190,8 +176,8 @@ export const ContentMetadataModal = ({ isOpen, onClose, onSave, file }: ContentM
             )}
 
             <div>
-              <span className="text-sm font-medium text-gray-500">File: </span>
-              <span className="text-sm font-semibold text-gray-800 break-all">{file.file.name}</span>
+              <span className="text-sm font-medium text-gray-500">Type: </span>
+              <span className="text-sm font-semibold text-gray-800">{contentItem.type}</span>
             </div>
 
             {/* Name Input */}
@@ -225,7 +211,7 @@ export const ContentMetadataModal = ({ isOpen, onClose, onSave, file }: ContentM
             </div>
 
             {/* Artist Input (for audio files) */}
-            {getCategoryFromMime(file.file.type) === 'AUDIO' && (
+            {contentItem.type === 'AUDIO' && (
               <div>
                 <label htmlFor="artist" className="block text-sm font-medium text-gray-700 mb-1">
                   Artist
@@ -242,7 +228,7 @@ export const ContentMetadataModal = ({ isOpen, onClose, onSave, file }: ContentM
             )}
 
             {/* Album Input (for audio files) */}
-            {getCategoryFromMime(file.file.type) === 'AUDIO' && (
+            {contentItem.type === 'AUDIO' && (
               <div>
                 <label htmlFor="album" className="block text-sm font-medium text-gray-700 mb-1">
                   Album
@@ -352,7 +338,7 @@ export const ContentMetadataModal = ({ isOpen, onClose, onSave, file }: ContentM
               isSaving ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'
             }`}
           >
-            {isSaving ? 'Saving...' : 'Save Content'}
+            {isSaving ? 'Saving...' : 'Save Changes'}
           </button>
         </div>
       </div>

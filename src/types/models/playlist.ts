@@ -1,19 +1,41 @@
-// Type for the Playlist DTO based on your JSON
 // src/types/models/playlist.ts
+
 export interface PlaylistDTO {
     id: number;
     name: string;
+    description?: string;
     playlistData: {
         loop: boolean;
-        duration: number; // e.g., 3600
+        duration: number;
         transition: string;
     };
     screenIds: number[];
-    contentIds: number[];
-
-    // Typed according to ScreenPlaylistQueueDTO structure
+    playlistItems: PlaylistItemDTO[];
+    contentIds?: number[];
     screenPlaylistQueues: ScreenPlaylistQueueDTO[];
 }
+
+export interface PlaylistItemDTO {
+    type: 'content' | 'spotify';
+    contentId?: number;
+    spotifyId?: string;
+    name: string;
+    duration: number;
+    playOrder: number; // Ensure playOrder is required
+    thumbnailUrl?: string;
+    url?: string;
+    // Spotify-specific fields
+    uri?: string;
+    album?: any;
+    artists?: any[];
+    preview_url?: string;
+    external_urls?: any;
+    // Content-specific fields
+    contentType?: string;
+    metadata?: any;
+}
+
+// ... rest of the types remain the same ...
 
 // Strict type for screen playlist queue entries
 export interface ScreenPlaylistQueueDTO {
@@ -32,14 +54,13 @@ export interface Page<T> {
     pageable: {
         pageNumber: number;
         pageSize: number;
-        // ... other pageable properties
     };
     totalPages: number;
     totalElements: number;
     last: boolean;
     first: boolean;
     size: number;
-    number: number; // The current page number (0-indexed)
+    number: number;
     numberOfElements: number;
     empty: boolean;
 }

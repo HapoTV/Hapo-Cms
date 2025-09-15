@@ -40,7 +40,7 @@ export const ImagesTab = () => {
                             <button
                                 onClick={(e) => {
                                     e.stopPropagation();
-                                    setOpenDropdownId(openDropdownId === image.id ? null : image.id);
+                                    setOpenDropdownId(openDropdownId === image.id ? null : image.id!);
                                 }}
                                 className="p-1.5 bg-white/70 rounded-full hover:bg-white/100"
                             >

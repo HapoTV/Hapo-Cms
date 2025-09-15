@@ -1,6 +1,6 @@
 import {useEffect} from 'react';
 import {Link} from 'react-router-dom';
-import {ChevronLeft, ChevronRight, Clock, Edit, Eye, Loader2, Play, Plus, Search, Trash2} from 'lucide-react';
+import {ChevronLeft, ChevronRight, Clock, Edit, Eye, Loader2, Play, Plus, Search, Trash2, Music} from 'lucide-react';
 import {usePlaylistsStore} from "../store/playlists.store";
 
 // Pure helper function for formatting duration
@@ -11,12 +11,40 @@ const formatDuration = (seconds: number): string => {
     return `${h > 0 ? `${h}h ` : ''}${m}m`;
 };
 
+// Helper to count total items from playlistItems array
+const getTotalItemCount = (playlist: any): number => {
+    return Array.isArray(playlist.playlistItems) ? playlist.playlistItems.length : 0;
+};
+
+// Helper to get item count text with Spotify indication
+const getItemText = (playlist: any): string => {
+    const totalItems = getTotalItemCount(playlist);
+    const spotifyItems = Array.isArray(playlist.playlistItems) 
+        ? playlist.playlistItems.filter((item: any) => item.type === 'spotify').length 
+        : 0;
+    const regularItems = totalItems - spotifyItems;
+    
+    if (spotifyItems > 0 && regularItems > 0) {
+        return `${regularItems} items + ${spotifyItems} Spotify`;
+    } else if (spotifyItems > 0) {
+        return `${spotifyItems} Spotify items`;
+    } else {
+        return `${totalItems} items`;
+    }
+};
+
+// Helper to check if playlist has Spotify items
+const hasSpotifyItems = (playlist: any): boolean => {
+    return Array.isArray(playlist.playlistItems) 
+        ? playlist.playlistItems.some((item: any) => item.type === 'spotify')
+        : false;
+};
+
 export default function PlaylistListPage() {
     const {
         playlists, isLoading, error, currentPage, totalPages,
         searchQuery, fetchPlaylists, deletePlaylist, setPage, setSearchQuery
     } = usePlaylistsStore();
-
 
     // Effect to fetch data when the component mounts or the page changes
     useEffect(() => {
@@ -45,6 +73,18 @@ export default function PlaylistListPage() {
         return (
             <span className={`px-2 py-1 rounded-full text-xs font-medium ${classes[status]}`}>
                 {status.charAt(0).toUpperCase() + status.slice(1)}
+            </span>
+        );
+    };
+
+    const getSpotifyBadge = (playlist: any) => {
+        const hasSpotify = hasSpotifyItems(playlist);
+        if (!hasSpotify) return null;
+        
+        return (
+            <span className="ml-2 px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium inline-flex items-center">
+                <Music className="w-3 h-3 mr-1" />
+                Spotify
             </span>
         );
     };
@@ -97,6 +137,9 @@ export default function PlaylistListPage() {
                                     Playlist Name
                                 </th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                    Type
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                                     Status
                                 </th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
@@ -125,20 +168,29 @@ export default function PlaylistListPage() {
                                                         {playlist.name}
                                                     </span>
                                             </Link>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        {getStatusBadge(playlist.playlistData.loop)}
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <div className="flex items-center text-sm text-gray-500">
-                                            <Clock className="w-4 h-4 mr-2"/>
-                                            <span>{formatDuration(playlist.playlistData.duration)}</span>
+                                            {getSpotifyBadge(playlist)}
                                         </div>
                                     </td>
                                     <td className="px-6 py-4">
                                         <div className="text-sm text-gray-500">
-                                            {playlist.contentIds.length} items
+                                            {hasSpotifyItems(playlist) ? 'Mixed' : 'Regular'}
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        {getStatusBadge(playlist.playlistData?.loop || false)}
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <div className="flex items-center text-sm text-gray-500">
+                                            <Clock className="w-4 h-4 mr-2"/>
+                                            <span>{formatDuration(playlist.playlistData?.duration || 0)}</span>
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <div className="text-sm text-gray-500" title={getItemText(playlist)}>
+                                            {getTotalItemCount(playlist)} items
+                                            {hasSpotifyItems(playlist) && (
+                                                <Music className="w-3 h-3 ml-1 text-green-500 inline" />
+                                            )}
                                         </div>
                                     </td>
                                     <td className="px-6 py-4">
@@ -147,20 +199,24 @@ export default function PlaylistListPage() {
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 text-right space-x-2">
-                                        <button
+                                        <Link
+                                            to={`${playlist.id}`}
                                             className="p-1 hover:bg-gray-100 rounded-lg text-gray-600 hover:text-gray-900 inline-flex"
+                                            title="View Details"
                                         >
                                             <Eye className="w-4 h-4"/>
-                                        </button>
+                                        </Link>
                                         <Link
                                             to={`${playlist.id}/edit`}
                                             className="p-1 hover:bg-gray-100 rounded-lg text-gray-600 hover:text-gray-900 inline-flex"
+                                            title="Edit Playlist"
                                         >
                                             <Edit className="w-4 h-4"/>
                                         </Link>
                                         <button
                                             onClick={() => handleDelete(playlist.id)}
                                             className="p-1 hover:bg-gray-100 rounded-lg text-gray-600 hover:text-red-600 inline-flex"
+                                            title="Delete Playlist"
                                         >
                                             <Trash2 className="w-4 h-4"/>
                                         </button>

@@ -1,5 +1,5 @@
 import {useState} from 'react';
-import {AlertCircle, FileText, Image, Loader, MoreVertical, Music, Search, Video} from 'lucide-react';
+import {AlertCircle, ArrowDown, ArrowUp, FileText, Image, Loader, MoreVertical, Music, Search, Video} from 'lucide-react';
 import {useContentPagination} from '../../hooks/useContentPagination';
 import {PaginationControls} from '../PaginationControls';
 import {DropdownMenu} from '../DropdownMenu';
@@ -33,6 +33,9 @@ const getIconForType = (type: string) => {
     }
 };
 
+type SortDirection = 'asc' | 'desc';
+type SortField = 'name' | 'uploadDate';
+
 export const AllContentTab = () => {
     const {
         paginatedItems,
@@ -43,6 +46,44 @@ export const AllContentTab = () => {
         ...paginationProps
     } = useContentPagination({category: 'ALL'});
     const [openDropdownId, setOpenDropdownId] = useState<number | null>(null);
+    const [sortConfig, setSortConfig] = useState<{
+        field: SortField;
+        direction: SortDirection;
+    }>({ field: 'name', direction: 'asc' });
+
+    // Handle sort when clicking on column headers
+    const handleSort = (field: SortField) => {
+        setSortConfig(prev => ({
+            field,
+            direction: prev.field === field && prev.direction === 'asc' ? 'desc' : 'asc'
+        }));
+    };
+
+    // Sort the items based on the current sort configuration
+    const sortedItems = [...paginatedItems].sort((a, b) => {
+        if (sortConfig.field === 'name') {
+            const nameA = a.name.toLowerCase();
+            const nameB = b.name.toLowerCase();
+            return sortConfig.direction === 'asc' 
+                ? nameA.localeCompare(nameB) 
+                : nameB.localeCompare(nameA);
+        } else {
+            const dateA = new Date(a.uploadDate!).getTime();
+            const dateB = new Date(b.uploadDate!).getTime();
+            return sortConfig.direction === 'asc' 
+                ? dateB - dateA // Newest first
+                : dateA - dateB; // Oldest first
+        }
+    });
+
+    const renderSortIcon = (field: SortField) => {
+        if (sortConfig.field !== field) {
+            return <ArrowUp className="w-3 h-3 ml-1 opacity-30" />;
+        }
+        return sortConfig.direction === 'asc' 
+            ? <ArrowUp className="w-3 h-3 ml-1" /> 
+            : <ArrowDown className="w-3 h-3 ml-1" />;
+    };
 
     const renderTable = () => {
         if (isLoading && paginatedItems.length === 0) {
@@ -62,7 +103,7 @@ export const AllContentTab = () => {
             </tr>;
         }
 
-        return paginatedItems.map((item) => (
+        return sortedItems.map((item) => (
             <tr key={item.id} className="hover:bg-gray-50">
                 <td className="px-6 py-4 flex items-center gap-3">
                     {getIconForType(item.type)}
@@ -72,7 +113,7 @@ export const AllContentTab = () => {
                 <td className="px-6 py-4 text-gray-600">{new Date(item.uploadDate!).toLocaleString()}</td>
                 <td className="px-6 py-4 text-gray-600">{Array.isArray(item.tags) ? item.tags.join(', ') : '—'}</td>
                 <td className="px-6 py-4 text-right relative">
-                    <button onClick={() => setOpenDropdownId(openDropdownId === item.id ? null : item.id)}
+                    <button onClick={() => setOpenDropdownId(openDropdownId === item.id ? null : item.id!)}
                             className="p-1 rounded-full hover:bg-gray-100">
                         <MoreVertical className="w-5 h-5"/>
                     </button>
@@ -96,9 +137,25 @@ export const AllContentTab = () => {
                 <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                     <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                        <th 
+                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100"
+                            onClick={() => handleSort('name')}
+                        >
+                            <div className="flex items-center">
+                                Name
+                                {renderSortIcon('name')}
+                            </div>
+                        </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date Added</th>
+                        <th 
+                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100"
+                            onClick={() => handleSort('uploadDate')}
+                        >
+                            <div className="flex items-center">
+                                Date Added
+                                {renderSortIcon('uploadDate')}
+                            </div>
+                        </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tags</th>
                         <th className="relative px-6 py-3"><span className="sr-only">Actions</span></th>
                     </tr>

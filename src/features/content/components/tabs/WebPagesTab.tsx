@@ -35,7 +35,7 @@ export const WebPagesTab = () => {
                 <td className="px-6 py-4 text-gray-600">{new Date(doc.uploadDate!).toLocaleString()}</td>
                 <td className="px-6 py-4 text-gray-600">{Array.isArray(doc.tags) ? doc.tags.join(', ') : '—'}</td>
                 <td className="px-6 py-4 text-right relative">
-                    <button onClick={() => setOpenDropdownId(openDropdownId === doc.id ? null : doc.id)}
+                    <button onClick={() => setOpenDropdownId(openDropdownId === doc.id ? null : doc.id!)}
                             className="p-1 rounded-full hover:bg-gray-100">
                         <MoreVertical className="w-5 h-5" />
                     </button>

@@ -14,6 +14,9 @@ interface Screen {
 
 // Define the type for the playlist object this modal expects
 interface Playlist {
+    playlistData: { duration: number; loop: boolean; transition: string; };
+    contentIds: never[];
+    screenPlaylistQueues: never[];
     id: number;
     name: string;
 }
@@ -93,6 +96,17 @@ const SetToScreenModal: React.FC<SetToScreenModalProps> = ({isOpen, onClose, pla
         }
     }, [isOpen]);
 
+    // Reset state when modal closes
+    useEffect(() => {
+        if (!isOpen) {
+            setSelectedType('default');
+            setSearchTerm('');
+            setSelectedScreens([]);
+            setSelectAll(false);
+            setError(null);
+        }
+    }, [isOpen]);
+
     // Filter screens based on the search term
     const filteredScreens = allScreens.filter(screen =>
         screen.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -125,7 +139,8 @@ const SetToScreenModal: React.FC<SetToScreenModalProps> = ({isOpen, onClose, pla
         );
     };
 
-    const resetStateAndClose = () => {
+    const handleCancel = () => {
+        // Reset state and close the modal
         setSelectedType('default');
         setSearchTerm('');
         setSelectedScreens([]);
@@ -143,7 +158,8 @@ const SetToScreenModal: React.FC<SetToScreenModalProps> = ({isOpen, onClose, pla
             screenIds: selectedScreens,
         });
 
-        resetStateAndClose();
+        // Don't reset state here - let the parent component handle navigation
+        // The useEffect above will reset state when modal closes
     };
 
     if (!isOpen) return null;
@@ -154,7 +170,7 @@ const SetToScreenModal: React.FC<SetToScreenModalProps> = ({isOpen, onClose, pla
                 {/* Header */}
                 <div className="flex items-center justify-between border-b border-gray-200 p-4">
                     <h2 className="text-lg font-semibold text-gray-900">Set to Screen</h2>
-                    <button onClick={resetStateAndClose}
+                    <button onClick={handleCancel}
                             className="text-gray-400 transition-colors hover:text-gray-600">
                         <X size={20}/>
                     </button>
@@ -162,7 +178,7 @@ const SetToScreenModal: React.FC<SetToScreenModalProps> = ({isOpen, onClose, pla
 
                 {/* Content */}
                 <div className="flex-1 space-y-4 overflow-y-auto p-4">
-                    {/* ... Type Selection (no changes needed) ... */}
+                    {/* Type Selection */}
                     <div>
                         <label className="mb-3 block text-sm font-medium text-gray-700">Type</label>
                         <div className="flex gap-6">
@@ -253,7 +269,7 @@ const SetToScreenModal: React.FC<SetToScreenModalProps> = ({isOpen, onClose, pla
 
                 {/* Footer */}
                 <div className="flex gap-2 border-t border-gray-200 p-4">
-                    <button onClick={resetStateAndClose}
+                    <button onClick={handleCancel}
                             className="flex-1 rounded-md bg-gray-100 px-4 py-2 font-medium text-gray-700 transition-colors hover:bg-gray-200">
                         Cancel
                     </button>

@@ -1,25 +1,13 @@
-import React, {useCallback} from 'react';
-import {Check, Loader, Save, Upload} from 'lucide-react';
-import {useUploadStore} from '../store/upload.store';
-
-// --- Component-specific Imports ---
-import {ContentMetadataModal} from './ContentMetadataModal';
-import {ALLOWED_CONTENT_TYPES} from '../util/fileTypeUtils';
-import {contentService} from '../../../services/content.service';
-import {ContentItem} from '../../../types/models/ContentItem';
-
-interface MetadataFormData { // Keep this interface
-  title: string;
-  duration?: number;
-  artist?: string;
-  album?: string;
-  tags: Record<string, string>;
-  campaignId?: number;
-  screenIds?: number[]; // Add missing field
-}
+// ContentUpload.tsx
+import React, { useCallback } from 'react';
+import { Check, Loader, Upload } from 'lucide-react';
+import { useUploadStore } from '../store/upload.store';
+import { ContentMetadataModal } from './ContentMetadataModal';
+import { ALLOWED_CONTENT_TYPES } from '../util/fileTypeUtils';
+import { contentService } from '../../../services/content.service';
+import { ContentRequest } from '../../../types/models/ContentItem';
 
 export const ContentUpload = () => {
-  // Get the modal state and actions from the store
   const {
     uploadingFiles,
     addFiles,
@@ -29,7 +17,6 @@ export const ContentUpload = () => {
     updateFileStatus
   } = useUploadStore();
 
-  // handleFiles, handleDrop, handleFileSelect remain the same
   const handleFiles = useCallback((files: File[]) => {
     const validFiles = files.filter(file => ALLOWED_CONTENT_TYPES.includes(file.type));
     if (validFiles.length > 0) {
@@ -46,107 +33,65 @@ export const ContentUpload = () => {
     if (e.target.files) {
       handleFiles(Array.from(e.target.files));
     }
-    e.target.value = ''; // Reset input to allow re-uploading the same file
+    e.target.value = '';
   };
-  /**
-   * FULLY CORRECTED: This function is called when saving from the modal.
-   * It now builds the exact payload your backend expects.
-   */
-  const handleMetadataSave = async (formData: MetadataFormData) => {
-    if (!fileForMetadata || !fileForMetadata.url || !fileForMetadata.backendFileType) {
-      console.error("Cannot save: Critical file information is missing.");
-      return;
-    }
-    // Set status to 'saving' for UI feedback
-    updateFileStatus(fileForMetadata.id, 'saving');
 
-    // 1. Robustly determine the content name, using filename as a fallback.
-    const contentName = formData.title?.trim() || fileForMetadata.file.name;
+  // THIS IS THE CRUCIAL HANDLER THAT CONNECTS THE MODAL TO THE UPLOAD PROCESS
+  // ContentUpload.tsx
+const handleMetadataSave = async (formData: {
+  name: string;
+  type: string;
+  duration?: number;
+  tags: Record<string, string>;
+  metadata: Record<string, unknown>;
+  campaignId?: number;
+  screenIds?: number[];
+}) => {
+  if (!fileForMetadata) {
+    console.error("No file selected for upload");
+    return;
+  }
 
-    // --- CONSTRUCT THE FINAL PAYLOAD ---
-    // Note: I'm correcting the structure to match your target JSON example.
+  updateFileStatus(fileForMetadata.id, 'saving');
 
-    // Create a ContentItem object directly
-    const newContentPayload: ContentItem = {
-      // Remove the id field to let the backend generate it
-      name: contentName,
-      type: fileForMetadata.backendFileType,
-      url: fileForMetadata.url,
-      // Pass the duration and tags object directly from the form data
+  try {
+    // Create properly typed ContentRequest object
+    const contentRequest: ContentRequest = {
+      name: formData.name,
+      type: formData.type,
       duration: formData.duration,
-      // Keep tags as an object structure as expected by the backend
-      tags: formData.tags || {},
+      tags: formData.tags,
+      metadata: formData.metadata,
       campaignId: formData.campaignId,
-      screenIds: formData.screenIds,
-      metadata: {
-        // You could add other things here later, like format or bitrate
-      },
+      screenIds: formData.screenIds
     };
 
-    // --- ADD ALL EXTRACTED METADATA TO THE METADATA OBJECT ---
-    // First, add album art URL if it exists
-    if (fileForMetadata.albumArtUrl) {
-      newContentPayload.metadata.albumArtUrl = fileForMetadata.albumArtUrl;
-    }
 
-    // Add all extracted metadata from audio files
-    if (fileForMetadata.extractedMetadata) {
-      // Add each property from extractedMetadata to the metadata object
-      if (fileForMetadata.extractedMetadata.title) {
-        newContentPayload.metadata.title = fileForMetadata.extractedMetadata.title;
-      }
-      if (fileForMetadata.extractedMetadata.artist) {
-        newContentPayload.metadata.artist = fileForMetadata.extractedMetadata.artist;
-      }
-      if (fileForMetadata.extractedMetadata.album) {
-        newContentPayload.metadata.album = fileForMetadata.extractedMetadata.album;
-      }
-      if (fileForMetadata.extractedMetadata.duration) {
-        newContentPayload.metadata.originalDuration = fileForMetadata.extractedMetadata.duration;
-      }
-    }
+    // Upload to backend
+    const response = await contentService.uploadContentWithFile(
+      fileForMetadata.file,
+      contentRequest
+    );
 
-    // Add user-edited metadata from the form (overrides extracted metadata)
-    if (formData.artist) {
-      newContentPayload.metadata.artist = formData.artist;
-    }
-    if (formData.album) {
-      newContentPayload.metadata.album = formData.album;
-    }
+    console.log('Upload successful:', response);
+    setFileForMetadata(null);
+    removeFile(fileForMetadata.id);
 
-    // Clean up a metadata object if it's empty
-    if (Object.keys(newContentPayload.metadata).length === 0) {
-      delete newContentPayload.metadata;
-    }
+    const nextFile = uploadingFiles.find(f => 
+      f.status === 'success' && f.id !== fileForMetadata.id
+    );
+    if (nextFile) setFileForMetadata(nextFile);
 
-    console.log("Sending this payload to the backend:", newContentPayload);
-
-    try {
-      // Cast the payload to the expected type for the service call
-      const createdContent = await contentService.createContent(newContentPayload);
-      console.log('Successfully created content:', createdContent);
-
-      // On success, close the modal and remove the item from the upload list
-      setFileForMetadata(null);
-      removeFile(fileForMetadata.id);
-
-      // Check if there are other completed files and open the next one
-      const nextFile = uploadingFiles.find(f => f.status === 'success' && f.id !== fileForMetadata.id);
-      if (nextFile) {
-        setFileForMetadata(nextFile);
-      }
-
-    } catch (error) {
-      console.error("Failed to save metadata:", error);
-      // On error, revert status so the user can try again
-      updateFileStatus(fileForMetadata.id, 'success');
-      alert("Failed to save. Please try again.");
-    }
-  };
+  } catch (error) {
+    console.error("Upload failed:", error);
+    updateFileStatus(fileForMetadata.id, 'error');
+    throw error;
+  }
+};
 
   return (
     <div className="max-w-4xl mx-auto p-4">
-      {/* --- Upload Dropzone UI --- */}
+      {/* Upload dropzone UI */}
       <div
         onDrop={handleDrop}
         onDragOver={(e) => e.preventDefault()}
@@ -164,39 +109,45 @@ export const ContentUpload = () => {
           />
           Browse Files
         </label>
-        <p className="text-xs text-gray-500 mt-4">Supports: Video, Audio, Images, and Documents</p>
+        <p className="text-xs text-gray-500 mt-4">Supports: Video, Audio, Images</p>
       </div>
 
-      {/* --- Upload List UI --- */}
+      {/* Upload list */}
       {uploadingFiles.length > 0 && (
         <div className="mt-8 space-y-4">
           <h2 className="text-lg font-medium text-gray-900">Uploading Files</h2>
           {uploadingFiles.map(file => (
             <div key={file.id} className="bg-gray-50 p-4 rounded-lg flex items-center gap-4">
               <div className="flex-grow">
-                {/* ... file name and progress bar ... */}
-                {file.status === 'success' && <p className="text-sm text-green-600 mt-1">Ready for metadata.</p>}
-                {file.status === 'saving' && <p className="text-sm text-yellow-600 mt-1">Saving metadata...</p>}
+                <p className="font-medium">{file.file.name}</p>
+                {file.status === 'success' && (
+                  <p className="text-sm text-green-600 mt-1">Ready for metadata</p>
+                )}
+                {file.status === 'uploading' && (
+                  <p className="text-sm text-blue-600 mt-1">Uploading...</p>
+                )}
+                {file.status === 'error' && (
+                  <p className="text-sm text-red-600 mt-1">Upload failed</p>
+                )}
+                {file.status === 'saving' && (
+                  <p className="text-sm text-yellow-600 mt-1">Saving metadata...</p>
+                )}
               </div>
-
               <div className="flex-shrink-0 flex items-center gap-2">
                 {file.status === 'uploading' && <Loader className="w-5 h-5 text-blue-500 animate-spin"/>}
-                {file.status === 'saving' && <Save className="w-5 h-5 text-yellow-500 animate-spin"/>}
-                {/* The "Add Info" button is no longer needed as the modal opens automatically */}
                 {file.status === 'success' && <Check className="w-5 h-5 text-green-600"/>}
-                {/* ... error and cancel buttons ... */}
               </div>
             </div>
           ))}
         </div>
       )}
 
-      {/* The Modal now reads its state from the store */}
+      {/* Metadata Modal */}
       <ContentMetadataModal
-          isOpen={!!fileForMetadata}
-          onClose={() => setFileForMetadata(null)}
-          onSave={handleMetadataSave}
-          file={fileForMetadata}
+        isOpen={!!fileForMetadata}
+        onClose={() => setFileForMetadata(null)}
+        onSave={handleMetadataSave}
+        file={fileForMetadata}
       />
     </div>
   );

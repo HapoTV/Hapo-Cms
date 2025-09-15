@@ -74,7 +74,7 @@ export const AudioTab = () => {
                     return (
                         <div key={audio.id} className="relative">
                             <div className="group aspect-square w-full bg-gray-100 rounded-lg overflow-hidden">
-                                <img src={audio.metadata?.albumArtUrl || MUSIC_COVER_IMAGE_URL} alt={audio.name}
+                                <img src={audio.metadata?.albumArtUrl as string || MUSIC_COVER_IMAGE_URL} alt={audio.name}
                                      className="w-full h-full object-cover"/>
                                 <div
                                     className="absolute inset-0 bg-black/30 flex items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity"
@@ -85,7 +85,7 @@ export const AudioTab = () => {
                         </div>
                             <div className="mt-2 flex justify-between items-start">
                                 <h3 className="font-semibold text-gray-800 truncate">{audio.name}</h3>
-                                <button onClick={() => setOpenDropdownId(openDropdownId === audio.id ? null : audio.id)}
+                                <button onClick={() => setOpenDropdownId(openDropdownId === audio.id ? null : audio.id!)}
                                         className="p-1 text-gray-400 hover:text-gray-700">
                                     <MoreVertical size={20}/>
                                 </button>
@@ -121,7 +121,7 @@ export const AudioTab = () => {
                     <audio ref={audioRef} src={currentlyPlaying.url} onEnded={() => handlePlayNextPrev('next')}
                            onTimeUpdate={e => setCurrentTime(e.currentTarget.currentTime)}
                            onLoadedMetadata={e => setDuration(e.currentTarget.duration)}/>
-                    <img src={currentlyPlaying.metadata?.albumArtUrl || MUSIC_COVER_IMAGE_URL}
+                    <img src={currentlyPlaying.metadata?.albumArtUrl as string || MUSIC_COVER_IMAGE_URL}
                          alt={currentlyPlaying.name} className="w-12 h-12 rounded-md object-cover"/>
                     <div className="flex-grow flex items-center justify-center gap-4">
                         <button onClick={() => handlePlayNextPrev('prev')}><SkipBack size={24}/></button>

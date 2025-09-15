@@ -6,7 +6,7 @@
  * @path src/services/api.service.ts
  */
 
-import axios, {AxiosInstance, AxiosRequestConfig} from 'axios';
+import axios, {AxiosInstance, AxiosRequestConfig, AxiosProgressEvent} from 'axios';
 import {tokenService} from './token.service';
 import authService from './auth.service';
 
@@ -127,7 +127,25 @@ export const apiService = {
   delete: async <T>(url: string, config?: AxiosRequestConfig): Promise<T> => {
     const response = await apiClient.delete<T>(url, config);
     return response.data;
-  }
+  },
+  upload: async <T>(
+    url: string,
+    formData: FormData,
+    onUploadProgress?: (progressEvent: AxiosProgressEvent) => void
+  ): Promise<T> => {
+    const config: AxiosRequestConfig = {
+      headers: {
+        'Content-Type': 'multipart/form-data', // Only set for uploads
+      },
+      onUploadProgress,
+      // Let Axios automatically set the boundary
+      transformRequest: (data) => data
+    };
+
+    const response = await apiClient.post<T>(url, formData, config);
+    return response.data;
+  },
+ 
 };
 
 export default apiService;

@@ -1,8 +1,9 @@
 // src/features/content/store/upload.store.ts
-import { create } from 'zustand';
-import { v4 as uuidv4 } from 'uuid';
+
+import {create} from 'zustand';
+import {v4 as uuidv4} from 'uuid';
 import * as mm from 'music-metadata-browser';
-import { getBackendFileType } from '../util/fileTypeUtils';
+import {getBackendFileType} from '../util/fileTypeUtils';
 
 export interface UploadingFile {
   id: string;
@@ -10,7 +11,8 @@ export interface UploadingFile {
   progress: number;
   status: 'queued' | 'uploading' | 'error' | 'success' | 'saving';
   error?: string;
-  url?: string;
+    url?: string;           // Holds the final, permanent Supabase URL
+    previewUrl?: string;    // Holds a temporary, local URL for instant previews
   albumArtUrl?: string;
   backendFileType?: string | null;
   extractedMetadata?: {
@@ -43,11 +45,10 @@ interface UploadState {
   uploadingFiles: UploadingFile[];
   fileForMetadata: UploadingFile | null;
   setFileForMetadata: (file: UploadingFile | null) => void;
-  addFiles: (files: File[]) => void;
+    addFiles: (files: File[]) => UploadingFile[];
   removeFile: (id: string) => void;
-  updateFileStatus: (id: string, status: UploadingFile['status']) => void;
-  retryUpload: (id: string) => void;
-  _triggerUpload: (id: string) => void;
+    updateFileStatus: (id: string, status: UploadingFile['status'], error?: string) => void;
+    setFileUploadSuccess: (id: string, url: string) => void;
 }
 
 export const useUploadStore = create<UploadState>((set, get) => ({
@@ -55,90 +56,74 @@ export const useUploadStore = create<UploadState>((set, get) => ({
   fileForMetadata: null,
   setFileForMetadata: (file) => set({ fileForMetadata: file }),
 
-  addFiles: (files: File[]) => {
+    /**
+     * Adds files to the queue, creates temporary preview URLs, and returns the
+     * new file entries so the component can start processing them.
+     */
+    addFiles: (files) => {
     const newFiles: UploadingFile[] = files.map((file) => ({
       id: `${file.name}-${file.lastModified}-${uuidv4()}`,
       file,
       progress: 0,
       status: 'queued',
+        previewUrl: URL.createObjectURL(file),
     }));
     set((state) => ({ uploadingFiles: [...state.uploadingFiles, ...newFiles] }));
-    newFiles.forEach((file) => get()._triggerUpload(file.id));
+        return newFiles;
   },
 
-  updateFileStatus: (id, status) => {
+    /**
+     * A generic action to update the status and optional error message of a file.
+     */
+    updateFileStatus: (id, status, error) => {
     set(state => ({
       uploadingFiles: state.uploadingFiles.map(f =>
-        f.id === id ? { ...f, status } : f
+          f.id === id ? {...f, status, error: error || f.error} : f
       )
     }));
   },
 
-  _triggerUpload: async (id: string) => {
-    const fileToUpload = get().uploadingFiles.find((f) => f.id === id);
-    if (!fileToUpload || fileToUpload.status === 'uploading') return;
+    /**
+     * Called by the component when a Supabase upload is successful.
+     * It updates the file's state to 'success', saves the permanent URL,
+     * and extracts metadata.
+     */
+    setFileUploadSuccess: async (id, url) => {
+        const fileToUpdate = get().uploadingFiles.find((f) => f.id === id);
+        if (!fileToUpdate) return;
 
-    set((state) => ({
-      uploadingFiles: state.uploadingFiles.map((f) =>
-        f.id === id ? { ...f, status: 'uploading', progress: 0 } : f
-      ),
-    }));
-
-    try {
-      // Extract metadata for audio files
       let extractedMetadata: UploadingFile['extractedMetadata'] | undefined;
-      if (fileToUpload.file.type.startsWith('audio/')) {
-        extractedMetadata = await extractMetadata(fileToUpload.file);
+        if (fileToUpdate.file.type.startsWith('audio/')) {
+            extractedMetadata = await extractMetadata(fileToUpdate.file);
       }
+        const backendFileType = getBackendFileType(fileToUpdate.file.type);
 
-      const backendFileType = getBackendFileType(fileToUpload.file.type);
-
-      // Create temporary object with basic info
-      const uploadedFile: UploadingFile = {
-        ...fileToUpload,
+        set(state => ({
+            uploadingFiles: state.uploadingFiles.map(f =>
+                    f.id === id ? {
+                        ...f,
         status: 'success',
         progress: 100,
+                        url, // The final, permanent Supabase URL
         backendFileType,
-        extractedMetadata,
-        // Generate a preview URL for the file
-        url: URL.createObjectURL(fileToUpload.file)
-      };
-
-      // Update the store
-      set(state => ({
-        uploadingFiles: state.uploadingFiles.map(f => 
-          f.id === id ? uploadedFile : f
+                        extractedMetadata
+                    } : f
         )
       }));
-
-      // Open metadata modal if no other modal is open
-      if (!get().fileForMetadata) {
-        get().setFileForMetadata(uploadedFile);
-      }
-
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown upload error';
-      set((state) => ({
-        uploadingFiles: state.uploadingFiles.map((f) =>
-          f.id === id ? { ...f, status: 'error', error: errorMessage } : f
-        ),
-      }));
-    }
   },
 
-  retryUpload: (id: string) => {
-    get()._triggerUpload(id);
-  },
-
-  removeFile: (id: string) => {
-    // Clean up object URLs if they exist
+    /**
+     * Removes a file from the queue and cleans up its temporary preview URL
+     * to prevent memory leaks.
+     */
+    removeFile: (id) => {
     const file = get().uploadingFiles.find(f => f.id === id);
-    if (file?.url) {
-      URL.revokeObjectURL(file.url);
+        if (file?.previewUrl) {
+            URL.revokeObjectURL(file.previewUrl);
     }
-    
     set((state) => ({
       uploadingFiles: state.uploadingFiles.filter((f) => f.id !== id),
+        fileForMetadata: state.fileForMetadata?.id === id ? null : state.fileForMetadata,
     }));
   },
 }));

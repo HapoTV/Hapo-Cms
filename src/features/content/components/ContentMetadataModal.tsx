@@ -1,22 +1,22 @@
-import { useEffect, useState } from 'react';
-import { FileText, Music, Plus, Trash2, X } from 'lucide-react';
-import { UploadingFile } from '../store/upload.store';
-import { getCategoryFromMime } from '../util/fileTypeUtils';
+// src/features/content/components/ContentMetadataModal.tsx
 
-interface MetadataFormData {
-  name: string;
-  type: string;
-  duration?: number;
-  tags: Record<string, string>;
-  metadata: Record<string, unknown>;
-  campaignId?: number;
-  screenIds?: number[];
-}
+import {useEffect, useState} from 'react';
+import {FileText, Music, Plus, Trash2} from 'lucide-react';
+import {UploadingFile} from '../store/upload.store';
+import {getCategoryFromMime} from '../util/fileTypeUtils';
+import {ContentRequest} from '../../../types/models/ContentItem';
+import {useTheme} from '../../../contexts/ThemeContext';
+// CHANGED: Imported all necessary UI components
+import {Modal, ModalFooter} from '../../../components/ui/Modal';
+import {Button} from '../../../components/ui/Button';
+import {Input} from '../../../components/ui/Input';
+import {Alert} from '../../../components/ui/Alert';
 
+// The onSave prop now uses a more specific type, excluding fields the component doesn't know about.
 interface ContentMetadataModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (data: MetadataFormData) => Promise<void>;
+    onSave: (data: Omit<ContentRequest, 'url' | 'type'> & { type: string }) => Promise<void>;
   file: UploadingFile | null;
 }
 
@@ -27,6 +27,7 @@ type TagItem = {
 };
 
 export const ContentMetadataModal = ({ isOpen, onClose, onSave, file }: ContentMetadataModalProps) => {
+    const {currentTheme} = useTheme();
   const [name, setName] = useState('');
   const [duration, setDuration] = useState<number | ''>('');
   const [artist, setArtist] = useState('');
@@ -39,16 +40,11 @@ export const ContentMetadataModal = ({ isOpen, onClose, onSave, file }: ContentM
 
   useEffect(() => {
     if (isOpen && file) {
-      const initialName = file.extractedMetadata?.title || file.file.name.replace(/\.[^/.]+$/, "");
-      const initialDuration = file.extractedMetadata?.duration;
-      const initialArtist = file.extractedMetadata?.artist || '';
-      const initialAlbum = file.extractedMetadata?.album || '';
-      
-      setName(initialName);
-      setDuration(initialDuration ? Math.round(initialDuration) : '');
-      setArtist(initialArtist);
-      setAlbum(initialAlbum);
-      setTagList([{id: Date.now().toString(), key: '', value: ''}]);
+        setName(file.extractedMetadata?.title || file.file.name.replace(/\.[^/.]+$/, ""));
+        setDuration(file.extractedMetadata?.duration ? Math.round(file.extractedMetadata.duration) : '');
+        setArtist(file.extractedMetadata?.artist || '');
+        setAlbum(file.extractedMetadata?.album || '');
+        setTagList([{id: Date.now().toString(), key: '', value: ''}]);
       setScreenIds([]);
       setCampaignId('');
       setError(null);
@@ -107,7 +103,8 @@ export const ContentMetadataModal = ({ isOpen, onClose, onSave, file }: ContentM
     if (artist.trim()) metadata.artist = artist.trim();
     if (album.trim()) metadata.album = album.trim();
 
-    const formData: MetadataFormData = {
+      // This is the data object passed to the onSave prop.
+      const formData = {
       name: name.trim(),
       type: file.backendFileType,
       duration: Number(duration) || undefined,
@@ -132,15 +129,25 @@ export const ContentMetadataModal = ({ isOpen, onClose, onSave, file }: ContentM
   const renderPreview = () => {
     if (!file) return null;
 
-    const previewUrl = file.albumArtUrl || file.url;
+      // This logic now seamlessly uses the local preview URL while uploading,
+      // and the final Supabase URL once the upload is complete.
+      const displayUrl = file.url || file.previewUrl;
     const fileCategory = getCategoryFromMime(file.file.type);
 
+      if (!displayUrl) {
+          return (
+              <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-md text-gray-500">
+                  <p>Preview Unavailable</p>
+              </div>
+          );
+      }
+
     if (fileCategory === 'IMAGE' || (fileCategory === 'AUDIO' && file.albumArtUrl)) {
-      return <img src={previewUrl} alt="Content Preview"
+        return <img src={file.albumArtUrl || displayUrl} alt="Content Preview"
                   className="w-full h-full object-cover rounded-md bg-gray-100"/>;
     }
     if (fileCategory === 'VIDEO') {
-      return <video src={file.url} controls className="w-full h-full object-contain rounded-md bg-black"/>;
+        return <video src={displayUrl} controls className="w-full h-full object-contain rounded-md bg-black"/>;
     }
 
     // Fallback for audio without album art, or documents
@@ -153,209 +160,132 @@ export const ContentMetadataModal = ({ isOpen, onClose, onSave, file }: ContentM
     );
   };
 
-  if (!isOpen || !file) {
-    return null;
-  }
+    if (!isOpen || !file) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col">
-        {/* Modal Header */}
-        <div className="flex items-center justify-between p-4 border-b">
-          <h2 className="text-xl font-semibold text-gray-800">Content Metadata</h2>
-          <button 
-            onClick={onClose} 
-            className="p-1 rounded-full text-gray-500 hover:bg-gray-100"
-            disabled={isSaving}
-          >
-            <X size={24} />
-          </button>
-        </div>
-
-        {/* Modal Body */}
-        <div className="flex-grow p-6 flex gap-6 overflow-y-auto">
+      <Modal
+          isOpen={isOpen}
+          onClose={onClose}
+          title="Content Metadata"
+          size="xl">
+          <div className="flex gap-6">
           {/* Preview Section */}
           <div className="w-1/3 flex-shrink-0">
-            <div className="aspect-square w-full">
+              <div className="aspect-square w-full rounded-md overflow-hidden"
+                   style={{backgroundColor: currentTheme.colors.background.secondary}}>
               {renderPreview()}
             </div>
           </div>
 
           {/* Form Section */}
-          <div className="w-2/3 space-y-6">
-            {error && (
-              <div className="p-3 bg-red-50 text-red-600 rounded-md">
-                {error}
-              </div>
-            )}
+              <div className="w-2/3 space-y-4">
+                  {error && <Alert variant="error">{error}</Alert>}
 
             <div>
-              <span className="text-sm font-medium text-gray-500">File: </span>
-              <span className="text-sm font-semibold text-gray-800 break-all">{file.file.name}</span>
+            <span
+                className="text-sm font-medium"
+                style={{color: currentTheme.colors.text.secondary}}>
+                File:
+            </span>
+                <span
+                    className="text-sm font-semibold break-all"
+                    style={{color: currentTheme.colors.text.primary}}>
+                {file.file.name}
+            </span>
             </div>
 
-            {/* Name Input */}
-            <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-                Name <span className="text-red-500">*</span>
-              </label>
-              <input
+                  <Input
+                      label="Name"
                 id="name"
-                type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md"
                 placeholder="e.g., Winter Deals Promo"
+                      required
               />
-            </div>
-
-            {/* Duration Input */}
-            <div>
-              <label htmlFor="duration" className="block text-sm font-medium text-gray-700 mb-1">
-                Duration (seconds)
-              </label>
-              <input
+                  <Input
+                      label="Duration (seconds)"
                 id="duration"
                 type="number"
                 min="0"
                 value={duration}
                 onChange={(e) => setDuration(e.target.value === '' ? '' : Number(e.target.value))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md"
               />
-            </div>
-
-            {/* Artist Input (for audio files) */}
             {getCategoryFromMime(file.file.type) === 'AUDIO' && (
-              <div>
-                <label htmlFor="artist" className="block text-sm font-medium text-gray-700 mb-1">
-                  Artist
-                </label>
-                <input
-                  id="artist"
-                  type="text"
-                  value={artist}
-                  onChange={(e) => setArtist(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                  placeholder="e.g., Artist Name"
-                />
-              </div>
+                <>
+                    <Input label="Artist" id="artist" value={artist} onChange={(e) => setArtist(e.target.value)}/>
+                    <Input label="Album" id="album" value={album} onChange={(e) => setAlbum(e.target.value)}/>
+                </>
             )}
-
-            {/* Album Input (for audio files) */}
-            {getCategoryFromMime(file.file.type) === 'AUDIO' && (
-              <div>
-                <label htmlFor="album" className="block text-sm font-medium text-gray-700 mb-1">
-                  Album
-                </label>
-                <input
-                  id="album"
-                  type="text"
-                  value={album}
-                  onChange={(e) => setAlbum(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                  placeholder="e.g., Album Name"
-                />
-              </div>
-            )}
-
-            {/* Campaign ID */}
-            <div>
-              <label htmlFor="campaignId" className="block text-sm font-medium text-gray-700 mb-1">
-                Campaign ID (optional)
-              </label>
-              <input
+                  <Input
+                      label="Campaign ID (optional)"
                 id="campaignId"
                 type="number"
                 min="0"
                 value={campaignId}
                 onChange={(e) => setCampaignId(e.target.value === '' ? '' : Number(e.target.value))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                placeholder="e.g., 12345"
               />
-            </div>
-
-            {/* Screen IDs */}
-            <div>
-              <label htmlFor="screenIds" className="block text-sm font-medium text-gray-700 mb-1">
-                Screen IDs (comma separated)
-              </label>
-              <input
+                  <Input
+                      label="Screen IDs (comma separated)"
                 id="screenIds"
-                type="text"
                 value={screenIds.join(', ')}
-                onChange={(e) => {
-                  const ids = e.target.value
-                    .split(',')
-                    .map(id => id.trim())
-                    .filter(id => /^\d+$/.test(id))
-                    .map(Number);
-                  setScreenIds(ids);
-                }}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                      onChange={(e) => setScreenIds(e.target.value.split(',').map(id => Number(id.trim())).filter(Boolean))}
                 placeholder="e.g., 1, 2, 3"
               />
-            </div>
 
             {/* Tags Section */}
             <div>
-              <h3 className="text-md font-medium text-gray-800 mb-2">Metadata Tags</h3>
+                <h3 className="text-md font-medium mb-2"
+                    style={{color: currentTheme.colors.text.primary}}>
+                    Metadata Tags
+                </h3>
               <div className="space-y-3">
                 {tagList.map((tag, index) => (
                   <div key={tag.id} className="flex items-center gap-2">
-                    <input
-                      type="text"
+                      <Input
                       value={tag.key}
                       onChange={(e) => handleTagChange(tag.id, 'key', e.target.value)}
-                      className="flex-1 px-3 py-2 border rounded-md"
                       placeholder={`Key ${index + 1}`}
                     />
-                    <input
-                      type="text"
+                      <Input
                       value={tag.value}
                       onChange={(e) => handleTagChange(tag.id, 'value', e.target.value)}
-                      className="flex-1 px-3 py-2 border rounded-md"
                       placeholder={`Value ${index + 1}`}
                     />
-                    <button
+                      <Button
+                          variant="ghost"
+                          size="sm"
                       onClick={() => handleRemoveTag(tag.id)}
-                      className="p-2 text-gray-500 hover:text-red-600 rounded-md"
-                      title="Remove Tag"
-                    >
+                          title="Remove Tag">
                       <Trash2 size={18} />
-                    </button>
+                      </Button>
                   </div>
                 ))}
               </div>
-              <button
+                <Button
+                    variant="outline"
+                    size="sm"
                 onClick={handleAddTag}
-                className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 border border-dashed rounded text-sm hover:bg-gray-100"
+                    leftIcon={<Plus size={16}/>}
+                    className="mt-3"
               >
-                <Plus size={16} /> Add Tag
-              </button>
+                    Add Tag
+                </Button>
             </div>
+              </div>
           </div>
-        </div>
-
-        {/* Modal Footer */}
-        <div className="flex items-center justify-end p-4 border-t gap-3">
-          <button
+          <ModalFooter>
+              <Button
+                  variant="secondary"
             onClick={onClose}
-            className="px-4 py-2 text-sm font-medium bg-white border rounded-md hover:bg-gray-50"
-            disabled={isSaving}
-          >
+                  disabled={isSaving}>
             Cancel
-          </button>
-          <button
+              </Button>
+              <Button
             onClick={handleSave}
-            disabled={isSaving}
-            className={`px-4 py-2 text-sm font-medium text-white border rounded-md ${
-              isSaving ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'
-            }`}
-          >
-            {isSaving ? 'Saving...' : 'Save Content'}
-          </button>
-        </div>
-      </div>
-    </div>
+            loading={isSaving}>
+                  Save Content
+              </Button>
+          </ModalFooter>
+      </Modal>
   );
 };

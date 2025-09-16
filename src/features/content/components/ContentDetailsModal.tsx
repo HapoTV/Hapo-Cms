@@ -1,14 +1,23 @@
-import { FileText, Music, Image, Film, Monitor, Clock, Tag, Info, X } from 'lucide-react';
-import { ContentItem } from '../../../types/models/ContentItem';
+// src/features/content/components/ContentDetailsModal.tsx
+
+// src/features/content/components/ContentDetailsModal.tsx
+
+// FINAL CODE
+
+import {Clock, FileText, Film, Image, Info, Monitor, Music, Tag, X} from 'lucide-react';
+import {ContentItem} from '../../../types/models/ContentItem';
+// NEW: We need a utility function to get the general category from a specific type.
+import {getTypeCategory} from '../util/fileTypeUtils';
 
 interface ContentDetailsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  contentItem: ContentItem;
+    contentItem: ContentItem | null;
 }
 
-const getCategoryIcon = (type: string) => {
-  switch (type) {
+const getCategoryIcon = (category: string | null) => {
+    // This function now correctly receives the general category
+    switch (category) {
     case 'AUDIO':
       return <Music className="text-blue-500" size={20} />;
     case 'IMAGE':
@@ -23,10 +32,13 @@ const getCategoryIcon = (type: string) => {
 };
 
 export const ContentDetailsModal = ({ isOpen, onClose, contentItem }: ContentDetailsModalProps) => {
-  console.log('Modal isOpen:', isOpen);
-  console.log('Content item:', contentItem);
-  
-  if (!isOpen) return null;
+    // MODIFIED: If the modal is not open or has no content, return null immediately.
+    if (!isOpen || !contentItem) {
+        return null;
+    }
+
+    // NEW: Derive the category from the specific content type
+    const category = getTypeCategory(contentItem.type);
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
@@ -34,13 +46,12 @@ export const ContentDetailsModal = ({ isOpen, onClose, contentItem }: ContentDet
         {/* Modal Header */}
         <div className="flex items-center justify-between p-4 border-b">
           <div className="flex items-center gap-3">
-            {getCategoryIcon(contentItem.type)}
+              {getCategoryIcon(category)}
             <h2 className="text-xl font-semibold text-gray-800">{contentItem.name}</h2>
           </div>
           <button 
-            onClick={onClose} 
-            className="p-1 rounded-full text-gray-500 hover:bg-gray-100"
-          >
+            onClick={onClose}
+            className="p-1 rounded-full text-gray-500 hover:bg-gray-100">
             <X size={24} />
           </button>
         </div>
@@ -51,21 +62,14 @@ export const ContentDetailsModal = ({ isOpen, onClose, contentItem }: ContentDet
             {/* Preview Section */}
             <div className="col-span-1">
               <div className="aspect-video w-full bg-gray-100 rounded-lg overflow-hidden">
-                {contentItem.type === 'IMAGE' ? (
-                  <img 
-                    src={contentItem.url} 
-                    alt={contentItem.name}
-                    className="w-full h-full object-contain"
-                  />
-                ) : contentItem.type === 'VIDEO' ? (
-                  <video 
-                    src={contentItem.url} 
-                    controls
-                    className="w-full h-full object-contain bg-black"
-                  />
+                  {/* MODIFIED: Check category for preview rendering */}
+                  {category === 'IMAGE' ? (
+                      <img src={contentItem.url} alt={contentItem.name} className="w-full h-full object-contain"/>
+                  ) : category === 'VIDEO' ? (
+                      <video src={contentItem.url} controls className="w-full h-full object-contain bg-black"/>
                 ) : (
                   <div className="w-full h-full flex flex-col items-center justify-center text-gray-400">
-                    {getCategoryIcon(contentItem.type)}
+                      {getCategoryIcon(category)}
                     <p className="mt-2">No preview available</p>
                   </div>
                 )}
@@ -81,12 +85,14 @@ export const ContentDetailsModal = ({ isOpen, onClose, contentItem }: ContentDet
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
                     <p className="text-gray-500">Type</p>
-                    <p className="font-medium capitalize">{contentItem.type.toLowerCase()}</p>
+                      {/* Display the specific type from the database */}
+                      <p className="font-medium uppercase">{contentItem.type}</p>
                   </div>
                   <div>
                     <p className="text-gray-500">Uploaded</p>
                     <p className="font-medium">
-                      {new Date(contentItem.uploadDate as string).toLocaleDateString()}
+                        {/* MODIFIED: Added a check for safety */}
+                        {contentItem.uploadDate ? new Date(contentItem.uploadDate).toLocaleDateString() : 'N/A'}
                     </p>
                   </div>
                   {contentItem.duration && (

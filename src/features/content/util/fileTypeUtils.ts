@@ -1,3 +1,5 @@
+// src/features/content/util/fileTypeUtils.ts
+
 import {FILE_TYPE_DEFINITIONS} from '../types/fileTypeDefinitions';
 
 /**
@@ -64,4 +66,23 @@ const MIME_TO_CATEGORY_MAP: Record<string, string> =
  */
 export const getCategoryFromMime = (mimeType: string): string | null => {
     return MIME_TO_CATEGORY_MAP[mimeType] || null;
+}
+
+// --- NEWLY ADDED AND REQUIRED FUNCTION ---
+
+const BACKEND_TYPE_TO_CATEGORY_MAP: Record<string, string> =
+    FILE_TYPE_DEFINITIONS.reduce((acc, current) => {
+        // Use toUpperCase() to make the lookup case-insensitive
+        acc[current.backendType.toUpperCase()] = current.category;
+        return acc;
+    }, {} as Record<string, string>);
+
+/**
+ * Gets the broad category (e.g., 'IMAGE') from a specific backend type (e.g., 'JPEG').
+ * This is REQUIRED by the ContentDetailsModal to show the correct icon and preview.
+ * @param backendType The specific type string from the database.
+ * @returns The category string (e.g., 'VIDEO') or null if not found.
+ */
+export const getTypeCategory = (backendType: string): string | null => {
+    return BACKEND_TYPE_TO_CATEGORY_MAP[backendType.toUpperCase()] || null;
 }

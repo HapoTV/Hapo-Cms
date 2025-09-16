@@ -1,3 +1,5 @@
+// src/components/ui/Table.tsx
+
 import React from 'react';
 import {useTheme} from '../../contexts/ThemeContext';
 import {LoadingSpinner} from './LoadingSpinner';
@@ -41,7 +43,6 @@ export const Table = <T extends Record<string, any>>({
 
     const getSizeStyles = () => {
         const {spacing, typography} = currentTheme;
-
         const sizes = {
             sm: {
                 padding: `${spacing.xs} ${spacing.sm}`,
@@ -62,10 +63,8 @@ export const Table = <T extends Record<string, any>>({
 
     const sizeStyles = getSizeStyles();
 
-    const tableStyles: React.CSSProperties = {
+    const tableContainerStyles: React.CSSProperties = {
         width: '100%',
-        borderCollapse: 'collapse',
-        backgroundColor: currentTheme.colors.background.primary,
         borderRadius: currentTheme.borderRadius.lg,
         overflow: 'hidden',
         boxShadow: currentTheme.shadows.sm,
@@ -74,7 +73,8 @@ export const Table = <T extends Record<string, any>>({
 
     const headerStyles: React.CSSProperties = {
         backgroundColor: currentTheme.colors.background.secondary,
-        borderBottom: `1px solid ${currentTheme.colors.border.primary}`,
+        // The bottom border on the header is now also controlled by the 'bordered' prop
+        borderBottom: bordered ? `1px solid ${currentTheme.colors.border.primary}` : 'none',
     };
 
     const headerCellStyles: React.CSSProperties = {
@@ -83,11 +83,12 @@ export const Table = <T extends Record<string, any>>({
         fontWeight: currentTheme.typography.fontWeight.semibold,
         fontFamily: currentTheme.typography.fontFamily.sans,
         textAlign: 'left',
-        borderRight: bordered ? `1px solid ${currentTheme.colors.border.primary}` : 'none',
+        // 1. CORRECTED: Removed the vertical border from header cells
     };
 
     const rowStyles: React.CSSProperties = {
-        borderBottom: `1px solid ${currentTheme.colors.border.primary}`,
+        // 2. CORRECTED: The bottom border on rows is now controlled by the 'bordered' prop
+        borderBottom: bordered ? `1px solid ${currentTheme.colors.border.primary}` : 'none',
         transition: 'background-color 0.2s ease-in-out',
         cursor: onRowClick ? 'pointer' : 'default',
     };
@@ -96,7 +97,6 @@ export const Table = <T extends Record<string, any>>({
         ...sizeStyles,
         color: currentTheme.colors.text.primary,
         fontFamily: currentTheme.typography.fontFamily.sans,
-        borderRight: bordered ? `1px solid ${currentTheme.colors.border.primary}` : 'none',
     };
 
     const getRowKey = (record: T, index: number): string | number => {
@@ -112,9 +112,9 @@ export const Table = <T extends Record<string, any>>({
         }
     };
 
-    const handleRowMouseLeave = (e: React.MouseEvent<HTMLTableRowElement>) => {
+    const handleRowMouseLeave = (e: React.MouseEvent<HTMLTableRowElement>, isStriped: boolean) => {
         if (onRowClick) {
-            e.currentTarget.style.backgroundColor = 'transparent';
+            e.currentTarget.style.backgroundColor = isStriped ? currentTheme.colors.background.secondary : 'transparent';
         }
     };
 
@@ -124,24 +124,26 @@ export const Table = <T extends Record<string, any>>({
         }
 
         if (column.dataIndex) {
-            return record[column.dataIndex];
+            return record[column.dataIndex as keyof T] as React.ReactNode;
         }
 
         return null;
     };
 
     return (
-        <div className={`ui-table-container ${className}`}>
-            <table style={tableStyles} className="ui-table">
+        <div style={tableContainerStyles} className={`ui-table-container ${className}`}>
+            <table style={{width: '100%', borderCollapse: 'collapse'}} className="ui-table">
                 <thead style={headerStyles}>
                 <tr>
-                    {columns.map((column) => (
+                    {columns.map((column, index) => (
                         <th
                             key={column.key}
                             style={{
                                 ...headerCellStyles,
                                 width: column.width,
                                 textAlign: column.align || 'left',
+                                paddingLeft: index === 0 ? currentTheme.spacing.lg : undefined,
+                                paddingRight: index === columns.length - 1 ? currentTheme.spacing.lg : undefined,
                             }}
                             className="ui-table-header-cell"
                         >
@@ -155,13 +157,14 @@ export const Table = <T extends Record<string, any>>({
                     <tr>
                         <td
                             colSpan={columns.length}
-                            style={{
-                                ...cellStyles,
-                                textAlign: 'center',
-                                padding: currentTheme.spacing.xl,
-                            }}
+                            style={{...cellStyles, textAlign: 'center', padding: currentTheme.spacing.xl}}
                         >
-                            <div className="flex items-center justify-center gap-2">
+                            <div style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: currentTheme.spacing.sm
+                            }}>
                                 <LoadingSpinner size="md"/>
                                 <span>Loading...</span>
                             </div>
@@ -182,32 +185,41 @@ export const Table = <T extends Record<string, any>>({
                         </td>
                     </tr>
                 ) : (
-                    data.map((record, index) => (
-                        <tr
-                            key={getRowKey(record, index)}
-                            style={{
+                    data.map((record, rowIndex) => {
+                        const isLastRow = rowIndex === data.length - 1;
+                        const isStriped = striped && rowIndex % 2 === 1;
+                        const finalRowStyles = {
                                 ...rowStyles,
-                                backgroundColor: striped && index % 2 === 1 ? currentTheme.colors.background.secondary : 'transparent',
-                            }}
+                            borderBottom: isLastRow || !bordered ? 'none' : rowStyles.borderBottom,
+                            backgroundColor: isStriped ? currentTheme.colors.background.secondary : 'transparent',
+                        };
+
+                        return (
+                            <tr
+                                key={getRowKey(record, rowIndex)}
+                                style={finalRowStyles}
                             className="ui-table-row"
-                            onClick={() => onRowClick?.(record, index)}
+                                onClick={() => onRowClick?.(record, rowIndex)}
                             onMouseEnter={handleRowMouseEnter}
-                            onMouseLeave={handleRowMouseLeave}
+                                onMouseLeave={(e) => handleRowMouseLeave(e, isStriped)}
                         >
-                            {columns.map((column) => (
+                                {columns.map((column, colIndex) => (
                                 <td
                                     key={column.key}
                                     style={{
                                         ...cellStyles,
                                         textAlign: column.align || 'left',
+                                        paddingLeft: colIndex === 0 ? currentTheme.spacing.lg : undefined,
+                                        paddingRight: colIndex === columns.length - 1 ? currentTheme.spacing.lg : undefined,
                                     }}
                                     className="ui-table-cell"
                                 >
-                                    {renderCell(column, record, index)}
+                                    {renderCell(column, record, rowIndex)}
                                 </td>
                             ))}
                         </tr>
-                    ))
+                        );
+                    })
                 )}
                 </tbody>
             </table>

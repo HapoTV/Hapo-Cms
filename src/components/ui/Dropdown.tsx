@@ -1,4 +1,7 @@
+// src/components/ui/Dropdown.tsx
+
 import React, {useEffect, useRef, useState} from 'react';
+import {createPortal} from 'react-dom';
 import {ChevronDown} from 'lucide-react';
 import {useTheme} from '../../contexts/ThemeContext';
 
@@ -12,7 +15,7 @@ export interface DropdownOption {
 export interface DropdownProps {
     options: DropdownOption[];
     value?: string;
-    placeholder?: string;
+    placeholder?: string | React.ReactNode;
     onSelect: (value: string) => void;
     disabled?: boolean;
     className?: string;
@@ -31,12 +34,19 @@ export const Dropdown: React.FC<DropdownProps> = ({
                                                       variant = 'default',
                                                   }) => {
     const [isOpen, setIsOpen] = useState(false);
+    const [position, setPosition] = useState({top: 0, left: 0, width: 0});
+    const triggerRef = useRef<HTMLButtonElement>(null);
     const dropdownRef = useRef<HTMLDivElement>(null);
     const {currentTheme} = useTheme();
 
+    // Effect to handle closing the dropdown when clicking outside
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+            // Close if the click is outside both the trigger button and the dropdown menu
+            if (
+                triggerRef.current && !triggerRef.current.contains(event.target as Node) &&
+                dropdownRef.current && !dropdownRef.current.contains(event.target as Node)
+            ) {
                 setIsOpen(false);
             }
         };
@@ -45,9 +55,23 @@ export const Dropdown: React.FC<DropdownProps> = ({
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
+    const handleToggle = () => {
+        if (disabled) return;
+
+        if (!isOpen && triggerRef.current) {
+            const rect = triggerRef.current.getBoundingClientRect();
+            // Position the menu below the trigger button
+            setPosition({
+                top: rect.bottom + window.scrollY,
+                left: rect.left + window.scrollX,
+                width: rect.width,
+            });
+        }
+        setIsOpen(!isOpen);
+    };
+
     const getVariantStyles = () => {
         const {colors} = currentTheme;
-
         const variants = {
             default: {
                 backgroundColor: colors.background.primary,
@@ -68,7 +92,6 @@ export const Dropdown: React.FC<DropdownProps> = ({
 
     const getSizeStyles = () => {
         const {spacing, typography} = currentTheme;
-
         const sizes = {
             sm: {
                 padding: `${spacing.xs} ${spacing.sm}`,
@@ -113,9 +136,9 @@ export const Dropdown: React.FC<DropdownProps> = ({
 
     const dropdownStyles: React.CSSProperties = {
         position: 'absolute',
-        top: '100%',
-        left: 0,
-        right: 0,
+        top: `${position.top}px`,
+        left: `${position.left}px`,
+        width: `${position.width}px`,
         marginTop: currentTheme.spacing.xs,
         backgroundColor: currentTheme.colors.background.primary,
         border: `1px solid ${currentTheme.colors.border.primary}`,
@@ -144,23 +167,15 @@ export const Dropdown: React.FC<DropdownProps> = ({
         }
     };
 
-    const handleKeyDown = (e: React.KeyboardEvent) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            setIsOpen(!isOpen);
-        } else if (e.key === 'Escape') {
-            setIsOpen(false);
-        }
-    };
-
+    // This component now returns a Fragment
     return (
-        <div ref={dropdownRef} className={`ui-dropdown relative ${className}`}>
+        <>
             <button
+                ref={triggerRef}
                 type="button"
                 style={triggerStyles}
-                className="ui-dropdown-trigger"
-                onClick={() => !disabled && setIsOpen(!isOpen)}
-                onKeyDown={handleKeyDown}
+                className={`ui-dropdown-trigger ${className}`}
+                onClick={handleToggle}
                 disabled={disabled}
                 onFocus={(e) => {
                     if (!disabled) {
@@ -173,18 +188,23 @@ export const Dropdown: React.FC<DropdownProps> = ({
                     e.target.style.boxShadow = 'none';
                 }}
             >
-                <div className="flex items-center gap-2">
+                <div style={{display: 'flex', alignItems: 'center', gap: currentTheme.spacing.sm}}>
                     {selectedOption?.icon}
                     <span>{selectedOption?.label || placeholder}</span>
                 </div>
                 <ChevronDown
-                    className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`}
-                    style={{color: currentTheme.colors.text.tertiary}}
+                    style={{
+                        color: currentTheme.colors.text.tertiary,
+                        transition: 'transform 0.2s ease-in-out',
+                        transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                    }}
+                    size={16}
                 />
             </button>
 
-            {isOpen && (
-                <div style={dropdownStyles} className="ui-dropdown-menu">
+            {isOpen && createPortal(
+                // 3. The menu is rendered in a portal to escape parent overflow containers
+                <div ref={dropdownRef} style={dropdownStyles} className="ui-dropdown-menu">
                     {options.map((option) => (
                         <div
                             key={option.value}
@@ -209,8 +229,9 @@ export const Dropdown: React.FC<DropdownProps> = ({
                             <span>{option.label}</span>
                         </div>
                     ))}
-                </div>
+                </div>,
+                document.body
             )}
-        </div>
+        </>
     );
 };

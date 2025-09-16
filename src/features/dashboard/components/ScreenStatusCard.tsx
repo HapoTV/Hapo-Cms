@@ -1,33 +1,29 @@
 // components/ScreenStatusCard.tsx
 // src/features/dashboard/components/ScreenStatusCard.tsx
-import { useState, useEffect } from 'react';
-import { Monitor, AlertCircle, Loader2 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+
+import {useEffect, useState} from 'react';
+import {Monitor} from 'lucide-react';
+import {useNavigate} from 'react-router-dom';
 import screensService from '../../../services/screens.service';
-import { ScreenStatus } from '../../../types/models/screen.types.ts';
+import {ScreenStatus} from '../../../types/models/screen.types.ts';
+import {ThemeColors, useTheme} from '../../../contexts/ThemeContext';
+import {Alert, Badge, Button, Card, LoadingOverlay, StatusBadge, StatusType} from '../../../components/ui';
 
 // The shape of the data from the API
 interface ScreenStatusCounts {
-  ONLINE: number;
-  OFFLINE: number;
-  MAINTENANCE: number;
-  PENDING: number;
-  UNREGISTERED: number;
+    ONLINE: number;
+    OFFLINE: number;
+    MAINTENANCE: number;
+    PENDING: number;
+    UNREGISTERED: number;
 }
 
-// The shape of the component's internal state, including the calculated quota
 interface ScreenStats extends ScreenStatusCounts {
-  quota: number;
+    quota: number;
 }
 
-// Configuration for rendering status list items
-const statusConfig: { label: string; key: ScreenStatus }[] = [
-  { label: 'Online', key: 'ONLINE' },
-  { label: 'Offline', key: 'OFFLINE' },
-  { label: 'Maintenance', key: 'MAINTENANCE' },
-  { label: 'Pending', key: 'PENDING' },
-  { label: 'Unregistered', key: 'UNREGISTERED' },
-];
+// Define a specific type for the keys we'll use from the theme's status colors
+type StatusColorKey = keyof ThemeColors['status'];
 
 export const ScreenStatusCard = () => {
   // State to hold the screen statistics fetched from the API
@@ -36,27 +32,39 @@ export const ScreenStatusCard = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   // State to hold any potential error messages
   const [error, setError] = useState<string | null>(null);
+    const {currentTheme} = useTheme();
+    const navigate = useNavigate();
 
-  // useEffect hook to fetch data when the component mounts
+    // MOVED: The config is now inside the component to access currentTheme.
+    const statusConfig: {
+        label: string;
+        key: ScreenStatus;
+        variant: StatusType;
+        colorKey: StatusColorKey | 'secondary'
+    }[] = [
+        {label: 'Online', key: 'ONLINE', variant: 'online', colorKey: 'success'},
+        {label: 'Offline', key: 'OFFLINE', variant: 'offline', colorKey: 'error'},
+        {label: 'Maintenance', key: 'MAINTENANCE', variant: 'maintenance', colorKey: 'warning'},
+        {label: 'Pending', key: 'PENDING', variant: 'pending', colorKey: 'info'},
+        {label: 'Unregistered', key: 'UNREGISTERED', variant: 'unregistered', colorKey: 'secondary'},
+    ];
+
   useEffect(() => {
     const fetchScreenStats = async () => {
       try {
         setIsLoading(true);
         // This now returns the flat object: { ONLINE: 55, OFFLINE: 17, ... }
         const statusCounts = await screensService.countAllScreensByStatus();
-
-        // --- THE FIX IS HERE ---
         // Calculate the total number of screens by summing the values from the API response.
         const totalScreens = Object.values(statusCounts).reduce((sum, count) => sum + count, 0);
 
         // Combine the API data with the *dynamically calculated* total for the quota.
         setStats({
           ...statusCounts,
-          quota: totalScreens, // Use the calculated total instead of a static number
+            quota: totalScreens
         });
 
       } catch (err) {
-        // Handle potential errors from the API call
         setError('Failed to load screen status.');
         console.error(err);
       } finally {
@@ -66,59 +74,76 @@ export const ScreenStatusCard = () => {
     };
 
     fetchScreenStats();
-  }, []); // The empty array [] ensures this effect runs only once on mount
+  }, []);
 
-  // --- Conditional Rendering ---
+    // This function is now fully type-safe.
+    const getStatusColor = (colorKey: StatusColorKey | 'secondary') => {
+        if (colorKey === 'secondary') {
+            return currentTheme.colors.text.secondary;
+        }
+        return currentTheme.colors.status[colorKey] || currentTheme.colors.text.primary;
+    };
 
-  // 1. Show a loading spinner while data is being fetched
-  if (isLoading) {
-    return (
-      <div className="mt-6 bg-white p-6 rounded-lg shadow-sm flex justify-center items-center h-48">
-        <Loader2 className="w-8 h-8 text-gray-500 animate-spin" />
-      </div>
-    );
-  }
-
-  // 2. Show an error message if the API call failed
-  if (error || !stats) {
-    return (
-      <div className="mt-6 bg-white p-6 rounded-lg shadow-sm text-red-600 flex flex-col items-center justify-center h-48">
-        <AlertCircle className="w-8 h-8 mb-2" />
-        <p>{error || 'Could not retrieve screen data.'}</p>
-      </div>
-    );
-  }
-
-  // --- Render with Data ---
   return (
-    <div className="mt-6 bg-white p-6 rounded-lg shadow-sm">
-      <h2 className="text-lg font-bold text-gray-700 mb-4">Screen Status</h2>
+      <Card elevated padding="lg" className="relative min-h-[24rem]">
+          <LoadingOverlay isLoading={isLoading}/>
+
+          <h2 className="text-lg font-bold mb-4" style={{color: currentTheme.colors.text.primary}}>
+              Screen Status
+          </h2>
+
+          {error && !isLoading && (
+              <Alert variant="error" title="Error">{error}</Alert>
+          )}
+
+          {!error && !isLoading && stats && (
+              <>
       <ul className="space-y-2">
-        {/* Map over the config array to render list items dynamically */}
-        {statusConfig.map(({ label, key }) => (
-          <li key={key} className="flex justify-between bg-gray-100 p-2 rounded-lg">
-            <span>{label}</span>
-            <span className="font-semibold">{stats[key]}</span>
+          {statusConfig.map(({key, variant, colorKey}) => (
+              <li
+                  key={key}
+                  className="flex justify-between items-center p-3 rounded-lg"
+                  style={{backgroundColor: getStatusColor(colorKey) + '15'}} // Use transparent color for background
+              >
+                  {/* Use the StatusBadge for a consistent label with icon */}
+                  <StatusBadge status={variant} showIcon={true} size="sm"/>
+                  <span
+                      className="font-semibold"
+                      style={{color: getStatusColor(colorKey)}} // Use full color for the count
+                  >
+                  {stats[key]}
+                </span>
           </li>
         ))}
-        {/* The quota now displays the dynamically calculated total */}
-        <li className="flex justify-between bg-blue-50 text-blue-800 p-2 rounded-lg mt-4 border border-blue-200">
-          <span className="font-semibold">Total Screens (Quota)</span>
-          <span className="font-bold">{stats.quota}</span>
+          <li className="flex justify-between items-center p-3 rounded-lg mt-4 border"
+              style={{borderColor: currentTheme.colors.border.primary}}>
+              <span className="font-semibold"
+                    style={{color: currentTheme.colors.text.primary}}>
+                  Total Screens
+              </span>
+              <Badge variant="primary" size="lg">{stats.quota}</Badge>
         </li>
       </ul>
-      <div className="mt-4">
-        <Link to="/screens" className="text-blue-500 hover:underline flex items-center gap-2">
-          <Monitor className="w-4 h-4" />
+
+                  <div className="mt-6">
+                      <Button
+                          variant="ghost"
+                          onClick={() => navigate('/screens')}
+                          leftIcon={<Monitor className="w-4 h-4"/>}
+                      >
           Manage Screens
-        </Link>
+                      </Button>
       </div>
+
       {stats.OFFLINE > 0 && (
-        <div className="mt-4 p-3 bg-yellow-50 text-yellow-800 rounded-lg flex items-center gap-2">
-          <AlertCircle className="w-5 h-5" />
-          <span>{stats.OFFLINE} screens are currently offline</span>
+          <div className="mt-4">
+              <Alert variant="warning" showIcon>
+                  {stats.OFFLINE} screen{stats.OFFLINE > 1 && 's'} are currently offline.
+              </Alert>
         </div>
       )}
-    </div>
+              </>
+          )}
+      </Card>
   );
 };

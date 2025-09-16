@@ -1,16 +1,20 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Search, Plus, Edit, Copy, ArrowUpRight, AlertCircle, Trash2, Calendar, List } from 'lucide-react';
-import { CampaignDeleteModal } from './CampaignDeleteModal';
-import { CampaignStatusBadge } from './CampaignStatusBadge';
+import {useState} from 'react';
+import {Link} from 'react-router-dom';
+// 1. Import 'MoreVertical' for the dropdown trigger icon
+import {AlertCircle, ArrowUpRight, Calendar, Copy, Edit, List, Plus, Trash2} from 'lucide-react';
+import {useTheme} from '../../../contexts/ThemeContext';
 
+// 1. Import all the necessary components from your central UI library
+import {Alert, Button, Modal, SearchInput, StatusBadge, Table, TableColumn, Tooltip,} from '../../../components/ui';
+
+// Mock data remains the same
 const mockCampaigns = [
   {
     id: 1,
     name: 'Summer Sale 2024',
     startDate: '2024-06-01',
     endDate: '2024-08-31',
-    status: 'active',
+      status: 'active' as const, // Added 'as const' for stricter typing with StatusBadge
     locations: ['Store A', 'Store B'],
   },
   {
@@ -18,160 +22,179 @@ const mockCampaigns = [
     name: 'Back to School',
     startDate: '2024-08-15',
     endDate: '2024-09-15',
-    status: 'scheduled',
+      status: 'scheduled' as const,
     locations: ['Store C'],
   },
 ];
 
+// Define a type for a single campaign for better type safety
+type Campaign = typeof mockCampaigns[0];
+
 export const CampaignList = () => {
+    const {currentTheme} = useTheme(); // Use the theme for custom styling if needed
   const [view, setView] = useState<'list' | 'calendar'>('list');
   const [searchQuery, setSearchQuery] = useState('');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [selectedCampaign, setSelectedCampaign] = useState<number | null>(null);
+    const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
 
-  const handleDelete = (campaignId: number) => {
-    setSelectedCampaign(campaignId);
+    const handleDeleteClick = (campaign: Campaign) => {
+        setSelectedCampaign(campaign);
     setShowDeleteModal(true);
   };
 
+    // 2. Define columns for the new <Table> component. This separates table structure from data.
+    const columns: TableColumn<Campaign>[] = [
+        {
+            key: 'name',
+            title: 'Campaign Name',
+            dataIndex: 'name',
+        },
+        {
+            key: 'startDate',
+            title: 'Start Date',
+            render: (_, record) => new Date(record.startDate).toLocaleDateString(),
+        },
+        {
+            key: 'endDate',
+            title: 'End Date',
+            render: (_, record) => new Date(record.endDate).toLocaleDateString(),
+        },
+        {
+            key: 'status',
+            title: 'Status',
+            // Use the generic StatusBadge directly in the render function
+            render: (_, record) => <StatusBadge status={record.status}/>,
+        },
+        {
+            key: 'locations',
+            title: 'Locations',
+            render: (_, record) => record.locations.join(', '),
+        },
+        {
+            key: 'actions',
+            title: 'Actions',
+            align: 'right',
+            // Render all action buttons using the reusable Button and Tooltip components
+            render: (_, record) => (
+                <div style={{display: 'flex', justifyContent: 'flex-end', gap: currentTheme.spacing.xs}}>
+                    <Tooltip content="Edit">
+                        <Link to={`${record.id}/edit`}>
+                            <Button variant="ghost" size="sm"><Edit size={16}/></Button>
+                        </Link>
+                    </Tooltip>
+                    <Tooltip content="Duplicate">
+                        <Button variant="ghost" size="sm"><Copy size={16}/></Button>
+                    </Tooltip>
+                    <Tooltip content="View Report">
+                        <Button variant="ghost" size="sm"><ArrowUpRight size={16}/></Button>
+                    </Tooltip>
+                    <Tooltip content="View Details">
+                        <Button variant="ghost" size="sm"><AlertCircle size={16}/></Button>
+                    </Tooltip>
+                    <Tooltip content="Delete">
+                        <Button variant="destructive" size="sm" onClick={() => handleDeleteClick(record)}>
+                            <Trash2 size={16}/>
+                        </Button>
+                    </Tooltip>
+                </div>
+            ),
+        },
+    ];
+
   return (
-    <div className="p-8 max-w-7xl mx-auto">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Campaigns</h1>
-        <Link
-          to="create"
-          className="flex items-center px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
-        >
-          <Plus className="w-5 h-5 mr-2" />
+      <div style={{padding: currentTheme.spacing['2xl'], maxWidth: '1280px', margin: 'auto'}}>
+          <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: currentTheme.spacing.lg
+          }}>
+              <h1 style={{
+                  fontSize: currentTheme.typography.fontSize['2xl'],
+                  fontWeight: currentTheme.typography.fontWeight.bold
+              }}>
+                  Campaigns
+              </h1>
+              {/* 3. Use the <Button> component wrapped in a <Link> for navigation */}
+              <Link to="create">
+                  <Button variant="primary" leftIcon={<Plus size={20}/>}>
           New Campaign
+                  </Button>
         </Link>
       </div>
 
-      <div className="flex gap-4 mb-6">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-          <input
-            type="text"
+          <div style={{display: 'flex', gap: currentTheme.spacing.md, marginBottom: currentTheme.spacing.lg}}>
+              {/* 4. Replace the old input with the new <SearchInput> component */}
+              <div style={{flex: 1, maxWidth: '400px'}}>
+                  <SearchInput
             placeholder="Search campaigns..."
-            className="pl-10 w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            onClear={() => setSearchQuery('')}
           />
         </div>
-        <div className="flex gap-2">
-          <button
+              <div style={{display: 'flex', gap: currentTheme.spacing.sm}}>
+                  {/* 5. Use themed <Button> components for the view toggles */}
+                  <Tooltip content="List View">
+                      <Button
+                          variant={view === 'list' ? 'secondary' : 'ghost'}
             onClick={() => setView('list')}
-            className={`p-2 rounded-lg ${
-              view === 'list' ? 'bg-gray-200' : 'hover:bg-gray-100'
-            }`}
           >
-            <List className="w-5 h-5" />
-          </button>
-          <button
+                          <List size={20}/>
+                      </Button>
+                  </Tooltip>
+                  <Tooltip content="Calendar View">
+                      <Button
+                          variant={view === 'calendar' ? 'secondary' : 'ghost'}
             onClick={() => setView('calendar')}
-            className={`p-2 rounded-lg ${
-              view === 'calendar' ? 'bg-gray-200' : 'hover:bg-gray-100'
-            }`}
           >
-            <Calendar className="w-5 h-5" />
-          </button>
-        </div>
+                          <Calendar size={20}/>
+                      </Button>
+                  </Tooltip>
+                  </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                Campaign Name
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                Start Date
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                End Date
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                Status
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                Locations
-              </th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {mockCampaigns.map((campaign) => (
-              <tr key={campaign.id} className="hover:bg-gray-50">
-                <td className="px-6 py-4">
-                  <div className="text-sm font-medium text-gray-900">
-                    {campaign.name}
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="text-sm text-gray-500">
-                    {new Date(campaign.startDate).toLocaleDateString()}
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="text-sm text-gray-500">
-                    {new Date(campaign.endDate).toLocaleDateString()}
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <CampaignStatusBadge status={campaign.status} />
-                </td>
-                <td className="px-6 py-4">
-                  <div className="text-sm text-gray-500">
-                    {campaign.locations.join(', ')}
-                  </div>
-                </td>
-                <td className="px-6 py-4 text-right space-x-2">
-                  <Link
-                    to={`${campaign.id}/edit`}
-                    className="p-1 hover:bg-gray-100 rounded-lg text-gray-600 hover:text-gray-900 inline-flex"
-                  >
-                    <Edit className="w-4 h-4" />
-                  </Link>
-                  <button
-                    className="p-1 hover:bg-gray-100 rounded-lg text-gray-600 hover:text-gray-900"
-                  >
-                    <Copy className="w-4 h-4" />
-                  </button>
-                  <button
-                    className="p-1 hover:bg-gray-100 rounded-lg text-gray-600 hover:text-gray-900"
-                  >
-                    <ArrowUpRight className="w-4 h-4" />
-                  </button>
-                  <button
-                    className="p-1 hover:bg-gray-100 rounded-lg text-gray-600 hover:text-gray-900"
-                  >
-                    <AlertCircle className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => handleDelete(campaign.id)}
-                    className="p-1 hover:bg-gray-100 rounded-lg text-gray-600 hover:text-red-600"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+          {/* 6. Replace the entire <table> structure with the new <Table> component */}
+          <Table<Campaign>
+              columns={columns}
+              data={mockCampaigns}
+              rowKey="id"
+              onRowClick={(record) => console.log('Clicked row:', record.name)}
+          />
 
-      <CampaignDeleteModal
+          {/* 7. Implement the delete modal directly using the generic <Modal> component */}
+          <Modal
         isOpen={showDeleteModal}
         onClose={() => setShowDeleteModal(false)}
-        onConfirm={() => {
-          // Handle delete
+        title="Confirm Campaign Deletion"
+          >
+              <div style={{display: 'flex', flexDirection: 'column', gap: currentTheme.spacing.md}}>
+                  <Alert variant="error">
+                      Are you sure you want to delete the campaign "{selectedCampaign?.name}"? This action is permanent
+                      and cannot be undone.
+                  </Alert>
+                  <div style={{
+                      display: 'flex',
+                      justifyContent: 'flex-end',
+                      gap: currentTheme.spacing.sm,
+                      marginTop: currentTheme.spacing.sm
+                  }}>
+                      <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
+                          Cancel
+                      </Button>
+                      <Button
+                          variant="destructive"
+                          onClick={() => {
+                              // Actual delete logic would go here
           setShowDeleteModal(false);
           setSelectedCampaign(null);
         }}
-      />
+                      >
+                          Delete Campaign
+                      </Button>
+                  </div>
+              </div>
+          </Modal>
     </div>
   );
 };

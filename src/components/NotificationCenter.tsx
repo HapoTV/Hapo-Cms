@@ -1,129 +1,189 @@
-import React, { useState } from 'react';
-import { Bell, Check, Eye, X, AlertCircle, CheckCircle, Info } from 'lucide-react';
+// src/components/NotificationCenter.tsx
+
+import React, {useEffect, useRef, useState} from 'react';
+import {AlertCircle, Bell, Check, CheckCircle, Info, X} from 'lucide-react';
+import {useTheme} from '../contexts/ThemeContext';
+import {Badge, Button, Card} from './ui';
 
 interface Notification {
-  id: string;
-  title: string;
-  message: string;
-  type: 'success' | 'warning' | 'info';
-  timestamp: Date;
-  read: boolean;
+    id: string;
+    title: string;
+    message: string;
+    type: 'success' | 'warning' | 'info';
+    timestamp: Date;
+    read: boolean;
 }
 
 const mockNotifications: Notification[] = [
-  { id: '1', title: 'Campaign Approved', message: 'Summer Sale 2024 campaign has been approved and scheduled.', type: 'success', timestamp: new Date('2024-03-15T10:30:00'), read: false },
-  { id: '2', title: 'Content Upload Complete', message: 'All assets for Product Launch campaign have been uploaded successfully.', type: 'success', timestamp: new Date('2024-03-15T09:45:00'), read: false },
-  { id: '3', title: 'System Maintenance', message: 'Scheduled maintenance in 2 hours. Please save your work.', type: 'warning', timestamp: new Date('2024-03-14T16:20:00'), read: true },
-  { id: '4', title: 'New Feature Available', message: 'Check out our new analytics dashboard features.', type: 'info', timestamp: new Date('2024-03-14T11:15:00'), read: true }
+    {
+        id: '1',
+        title: 'Campaign Approved',
+        message: 'Summer Sale 2024 campaign has been approved and scheduled.',
+        type: 'success',
+        timestamp: new Date('2024-03-15T10:30:00'),
+        read: false
+    },
+    {
+        id: '2',
+        title: 'Content Upload Complete',
+        message: 'All assets for Product Launch campaign have been uploaded successfully.',
+        type: 'success',
+        timestamp: new Date('2024-03-15T09:45:00'),
+        read: false
+    },
+    {
+        id: '3',
+        title: 'System Maintenance',
+        message: 'Scheduled maintenance in 2 hours. Please save your work.',
+        type: 'warning',
+        timestamp: new Date('2024-03-14T16:20:00'),
+        read: true
+    },
+    {
+        id: '4',
+        title: 'New Feature Available',
+        message: 'Check out our new analytics dashboard features.',
+        type: 'info',
+        timestamp: new Date('2024-03-14T11:15:00'),
+        read: true
+    }
 ];
+
 export const NotificationCenter: React.FC = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [notifications, setNotifications] = useState(mockNotifications);
-  const unreadCount = notifications.filter(n => !n.read).length;
+    const [isOpen, setIsOpen] = useState(false);
+    const [notifications, setNotifications] = useState(mockNotifications);
+    const {currentTheme} = useTheme();
+    const dropdownRef = useRef<HTMLDivElement>(null); // Ref for the component's container
+    const unreadCount = notifications.filter(n => !n.read).length;
 
-  const markAllAsRead = () => setNotifications(notifications.map(n => ({ ...n, read: true })));
-  const markAsRead = (id: string) => setNotifications(notifications.map(n => (n.id === id ? { ...n, read: true } : n)));
+    // CHANGED: Added useEffect to handle clicks outside the component
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setIsOpen(false);
+            }
+        };
+        // Add event listener when the component mounts
+        document.addEventListener('mousedown', handleClickOutside);
+        // Clean up the event listener when the component unmounts
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
-  const getIcon = (type: 'success' | 'warning' | 'info') => {
-    const icons = {
-      success: <CheckCircle className="w-5 h-5 text-green-500" />,
-      warning: <AlertCircle className="w-5 h-5 text-yellow-500" />,
-      info: <Info className="w-5 h-5 text-blue-500" />
+    const markAllAsRead = () => setNotifications(notifications.map(n => ({...n, read: true})));
+    const markAsRead = (id: string) => setNotifications(notifications.map(n => (n.id === id ? {...n, read: true} : n)));
+
+    const getIcon = (type: 'success' | 'warning' | 'info') => {
+        const {colors} = currentTheme;
+        const iconProps = {className: "w-5 h-5 flex-shrink-0", style: {}};
+        const icons = {
+            success: {...iconProps, style: {color: colors.status.success}},
+            warning: {...iconProps, style: {color: colors.status.warning}},
+            info: {...iconProps, style: {color: colors.status.info}},
+        };
+        const config = icons[type];
+        const IconComponent = {success: CheckCircle, warning: AlertCircle, info: Info}[type];
+        return <IconComponent className={config.className} style={config.style}/>;
     };
-    return icons[type];
-  };
 
-  const formatTimestamp = (date: Date) => {
-    const now = new Date();
-    const diff = now.getTime() - date.getTime();
-    const minutes = Math.floor(diff / 60000);
-    const hours = Math.floor(minutes / 60);
-    const days = Math.floor(hours / 24);
+    const formatTimestamp = (date: Date) => {
+        const now = new Date();
+        const diff = now.getTime() - date.getTime();
+        const minutes = Math.floor(diff / 60000);
+        if (minutes < 1) return 'Just now';
+        if (minutes < 60) return `${minutes}m ago`;
+        const hours = Math.floor(minutes / 60);
+        if (hours < 24) return `${hours}h ago`;
+        const days = Math.floor(hours / 24);
+        return `${days}d ago`;
+    };
 
-    if (days > 0) return `${days}d ago`;
-    if (hours > 0) return `${hours}h ago`;
-    if (minutes > 0) return `${minutes}m ago`;
-    return 'Just now';
-  };
-
-  return (
-      <div className="relative">
-        <button onClick={() => setIsOpen(!isOpen)} className="relative p-2 text-gray-600 hover:bg-gray-100 rounded-lg">
-          <Bell className="w-6 h-6" />
-          {unreadCount > 0 && (
-              <span className="absolute top-0 right-0 inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-red-500 rounded-full">
+    return (
+        <div className="relative" ref={dropdownRef}>
+            <Button variant="ghost" onClick={() => setIsOpen(!isOpen)}>
+                <span className="relative">
+                <Bell className="w-6 h-6"/>
+                    {unreadCount > 0 && (
+                        <Badge
+                            variant="error"
+                            size="sm"
+                            className="absolute top-0 right-0 transform translate-x-1/2 -translate-y-1/2"
+                            // CHANGED: Inline style to override for a high-contrast badge
+                            style={{
+                                backgroundColor: currentTheme.colors.status.error,
+                                color: currentTheme.colors.text.inverse,
+                            }}
+                        >
             {unreadCount}
+                        </Badge>
+                    )}
           </span>
-          )}
-        </button>
+            </Button>
 
-        {isOpen && (
-            <div className="absolute right-0 mt-2 w-96 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
-              <div className="flex items-center justify-between p-4 border-b">
-                <h3 className="font-semibold text-gray-900">Notifications</h3>
-                <button onClick={() => setIsOpen(false)} className="text-gray-400 hover:text-gray-600">
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
+            {isOpen && (
+                <Card elevated padding="none" className="absolute right-0 mt-2 w-96 z-50">
+                    {/* ... (rest of the card content remains the same) ... */}
+                    <div className="flex items-center justify-between p-4 border-b"
+                         style={{borderColor: currentTheme.colors.border.primary}}>
+                        <h3 className="font-semibold"
+                            style={{color: currentTheme.colors.text.primary}}>Notifications</h3>
+                        <Button variant="ghost" size="sm" onClick={() => setIsOpen(false)}>
+                            <X className="w-5 h-5"/>
+                        </Button>
+                    </div>
 
-              {unreadCount > 0 && (
-                  <div className="p-3 border-b">
-                    <button onClick={markAllAsRead} className="flex items-center text-sm text-blue-600 hover:text-blue-700">
-                      <Check className="w-4 h-4 mr-1" />
-                      Mark all as read
-                    </button>
-                  </div>
-              )}
+                    {unreadCount > 0 && (
+                        <div className="p-2 border-b" style={{borderColor: currentTheme.colors.border.primary}}>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={markAllAsRead}
+                                className="w-full justify-start"
+                                leftIcon={<Check className="w-4 h-4"/>}
+                                style={{color: currentTheme.colors.brand.primary}}
+                            >
+                                Mark all as read
+                            </Button>
+                        </div>
+                    )}
 
-              <div className="max-h-[480px] overflow-y-auto">
-                {notifications.length === 0 ? (
-                    <div className="p-4 text-center text-gray-500">No notifications</div>
-                ) : (
-                    <>
-                      {notifications.some(n => !n.read) && (
-                          <div className="py-2">
-                            <div className="px-4 py-2 text-xs font-semibold text-gray-500 uppercase">Unread</div>
-                            {notifications.filter(n => !n.read).map(notification => (
-                                <div key={notification.id} className="px-4 py-3 hover:bg-gray-50 cursor-pointer" onClick={() => markAsRead(notification.id)}>
-                                  <div className="flex items-start gap-3">
-                                    {getIcon(notification.type)}
-                                    <div className="flex-1">
-                                      <div className="flex items-center justify-between">
-                                        <h4 className="text-sm font-medium text-gray-900">{notification.title}</h4>
-                                        <span className="text-xs text-gray-500">{formatTimestamp(notification.timestamp)}</span>
-                                      </div>
-                                      <p className="text-sm text-gray-600 mt-1">{notification.message}</p>
+                    <div className="max-h-[480px] overflow-y-auto">
+                        {notifications.length === 0 ? (
+                            <div className="p-8 text-center" style={{color: currentTheme.colors.text.tertiary}}>No
+                                notifications</div>
+                        ) : (
+                            notifications.map(notification => (
+                                <div
+                                    key={notification.id}
+                                    className="px-4 py-3 border-b cursor-pointer hover:bg-gray-50"
+                                    style={{
+                                        borderColor: currentTheme.colors.border.primary,
+                                        opacity: notification.read ? 0.7 : 1
+                                    }}
+                                    onClick={() => markAsRead(notification.id)}
+                                >
+                                    <div className="flex items-start gap-3">
+                                        {getIcon(notification.type)}
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center justify-between">
+                                                <h4 className="text-sm font-medium"
+                                                    style={{color: currentTheme.colors.text.primary}}>{notification.title}</h4>
+                                                <span className="text-xs flex-shrink-0 ml-2"
+                                                      style={{color: currentTheme.colors.text.tertiary}}>
+                                                    {formatTimestamp(notification.timestamp)}
+                                                </span>
+                                            </div>
+                                            <p className="text-sm mt-1"
+                                               style={{color: currentTheme.colors.text.secondary}}>
+                                                {notification.message}
+                                            </p>
+                                        </div>
                                     </div>
-                                  </div>
                                 </div>
-                            ))}
-                          </div>
-                      )}
-
-                      {notifications.some(n => n.read) && (
-                          <div className="py-2">
-                            <div className="px-4 py-2 text-xs font-semibold text-gray-500 uppercase">Earlier</div>
-                            {notifications.filter(n => n.read).map(notification => (
-                                <div key={notification.id} className="px-4 py-3 hover:bg-gray-50 cursor-pointer opacity-75">
-                                  <div className="flex items-start gap-3">
-                                    {getIcon(notification.type)}
-                                    <div className="flex-1">
-                                      <div className="flex items-center justify-between">
-                                        <h4 className="text-sm font-medium text-gray-900">{notification.title}</h4>
-                                        <span className="text-xs text-gray-500">{formatTimestamp(notification.timestamp)}</span>
-                                      </div>
-                                      <p className="text-sm text-gray-600 mt-1">{notification.message}</p>
-                                    </div>
-                                  </div>
-                                </div>
-                            ))}
-                          </div>
-                      )}
-                    </>
-                )}
-              </div>
-            </div>
-        )}
-      </div>
-  );
+                            ))
+                        )}
+                    </div>
+                </Card>
+            )}
+        </div>
+    );
 };

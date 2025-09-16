@@ -1,5 +1,57 @@
-import React, { Component, ErrorInfo } from 'react';
-import { AlertTriangle, RefreshCw } from 'lucide-react';
+// src/components/ErrorBoundary.tsx
+
+import React, {Component, ErrorInfo} from 'react';
+import {AlertTriangle, RefreshCw} from 'lucide-react';
+import {useTheme} from '../contexts/ThemeContext';
+import {Card} from './ui/Card';
+import {Alert} from './ui/Alert';
+import {Button} from './ui/Button';
+
+// --- UI Component (Functional, can use hooks) ---
+
+interface ErrorBoundaryUIProps {
+    error: Error | null;
+    onGoHome: () => void;
+    onRetry: () => void;
+}
+
+const ErrorBoundaryUI: React.FC<ErrorBoundaryUIProps> = ({error, onGoHome, onRetry}) => {
+    const {currentTheme} = useTheme();
+
+    return (
+        <div
+            className="min-h-screen flex items-center justify-center p-4"
+            style={{backgroundColor: currentTheme.colors.background.secondary}}
+        >
+            <Card elevated padding="lg" className="max-w-lg w-full">
+                <div className="flex items-center gap-3 mb-4" style={{color: currentTheme.colors.status.error}}>
+                    <AlertTriangle className="w-8 h-8"/>
+                    <h2 className="text-xl font-semibold">Something went wrong</h2>
+                </div>
+
+                <Alert variant="error" title={error?.message || 'An unexpected error occurred'}>
+                    {error?.stack && (
+                        <pre className="mt-2 text-xs overflow-auto">
+              {error.stack}
+            </pre>
+                    )}
+                </Alert>
+
+                <div className="flex justify-end gap-4 mt-6">
+                    <Button variant="secondary" onClick={onGoHome}>
+                        Go to Home
+                    </Button>
+                    <Button variant="primary" onClick={onRetry} leftIcon={<RefreshCw className="w-4 h-4"/>}>
+                        Try Again
+                    </Button>
+                </div>
+            </Card>
+        </div>
+    );
+};
+
+
+// --- Logic Component (Class, handles state and lifecycle) ---
 
 interface Props {
   children: React.ReactNode;
@@ -8,92 +60,41 @@ interface Props {
 interface State {
   hasError: boolean;
   error: Error | null;
-  errorInfo: ErrorInfo | null;
-  previousLocation: string;
 }
 
 export class ErrorBoundary extends Component<Props, State> {
   public state: State = {
     hasError: false,
     error: null,
-    errorInfo: null,
-    previousLocation: window.location.pathname
   };
 
-  public static getDerivedStateFromError(error: Error): Partial<State> {
+    public static getDerivedStateFromError(error: Error): State {
     return { hasError: true, error };
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    this.setState({
-      error,
-      errorInfo,
-      previousLocation: window.location.pathname
-    });
-    
-    // Log error to your error tracking service
-    console.error('Uncaught error:', error, errorInfo);
+      console.error("Uncaught error:", error, errorInfo);
   }
 
   private handleRetry = () => {
-    this.setState({
-      hasError: false,
-      error: null,
-      errorInfo: null
-    });
-
-    // Navigate back to the previous route
-    window.history.pushState(null, '', this.state.previousLocation);
+      // A safer way to retry is to reload the page.
+      // Navigating can be complex if the error is in the routing logic itself.
     window.location.reload();
   };
 
   private handleGoHome = () => {
-    this.setState({
-      hasError: false,
-      error: null,
-      errorInfo: null
-    });
+      // This is a safe way to navigate home
     window.location.href = '/';
   };
 
   public render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-          <div className="bg-white p-6 rounded-lg shadow-lg max-w-lg w-full">
-            <div className="flex items-center gap-3 text-red-600 mb-4">
-              <AlertTriangle className="w-8 h-8" />
-              <h2 className="text-xl font-semibold">Something went wrong</h2>
-            </div>
-            
-            <div className="bg-red-50 border border-red-100 rounded-lg p-4 mb-6">
-              <p className="text-red-800 font-mono text-sm break-all">
-                {this.state.error?.message || 'An unexpected error occurred'}
-              </p>
-              {this.state.error?.stack && (
-                <pre className="mt-2 text-xs text-red-700 overflow-auto">
-                  {this.state.error.stack}
-                </pre>
-              )}
-            </div>
-
-            <div className="flex justify-end gap-4">
-              <button
-                onClick={this.handleGoHome}
-                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
-              >
-                Go to Home
-              </button>
-              <button
-                onClick={this.handleRetry}
-                className="flex items-center px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-              >
-                <RefreshCw className="w-4 h-4 mr-2" />
-                Try Again
-              </button>
-            </div>
-          </div>
-        </div>
+          <ErrorBoundaryUI
+              error={this.state.error}
+              onGoHome={this.handleGoHome}
+              onRetry={this.handleRetry}
+          />
       );
     }
 

@@ -1,3 +1,4 @@
+/*
 import React, { useState } from 'react';
 import {
   Calendar,
@@ -96,7 +97,7 @@ const ScheduleDetails: React.FC<ScheduleDetailsProps> = ({ schedule, onSave }) =
 
   const ViewMode = () => (
     <div className="space-y-8">
-      {/* Header Section */}
+      {/!* Header Section *!/}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">{schedule.name}</h2>
@@ -123,7 +124,7 @@ const ScheduleDetails: React.FC<ScheduleDetailsProps> = ({ schedule, onSave }) =
         </div>
       </div>
 
-      {/* Date Section */}
+      {/!* Date Section *!/}
       <div className="bg-white p-6 rounded-lg shadow-sm">
         <div className="flex items-center gap-2 mb-4">
           <Calendar className="w-5 h-5 text-gray-500" />
@@ -156,7 +157,7 @@ const ScheduleDetails: React.FC<ScheduleDetailsProps> = ({ schedule, onSave }) =
         </div>
       </div>
 
-      {/* Time Slots Section */}
+      {/!* Time Slots Section *!/}
       <div className="bg-white p-6 rounded-lg shadow-sm">
         <div className="flex items-center gap-2 mb-4">
           <Clock className="w-5 h-5 text-gray-500" />
@@ -199,7 +200,7 @@ const ScheduleDetails: React.FC<ScheduleDetailsProps> = ({ schedule, onSave }) =
         </div>
       </div>
 
-      {/* Assignments Section */}
+      {/!* Assignments Section *!/}
       <div className="bg-white p-6 rounded-lg shadow-sm">
         <div className="flex items-center gap-2 mb-4">
           <Layers className="w-5 h-5 text-gray-500" />
@@ -242,7 +243,7 @@ const ScheduleDetails: React.FC<ScheduleDetailsProps> = ({ schedule, onSave }) =
         </div>
       </div>
 
-      {/* Metadata Section */}
+      {/!* Metadata Section *!/}
       <div className="bg-white p-6 rounded-lg shadow-sm">
         <div className="flex items-center gap-2 mb-4">
           <Info className="w-5 h-5 text-gray-500" />
@@ -262,7 +263,7 @@ const ScheduleDetails: React.FC<ScheduleDetailsProps> = ({ schedule, onSave }) =
 
   const EditMode = () => (
     <form onSubmit={(e) => { e.preventDefault(); handleSave(); }} className="space-y-8">
-      {/* Basic Info Section */}
+      {/!* Basic Info Section *!/}
       <div className="bg-white p-6 rounded-lg shadow-sm">
         <h3 className="text-lg font-medium text-gray-900 mb-4">Basic Information</h3>
         <div className="space-y-4">
@@ -300,7 +301,7 @@ const ScheduleDetails: React.FC<ScheduleDetailsProps> = ({ schedule, onSave }) =
         </div>
       </div>
 
-      {/* Date Range Section */}
+      {/!* Date Range Section *!/}
       <div className="bg-white p-6 rounded-lg shadow-sm">
         <h3 className="text-lg font-medium text-gray-900 mb-4">Date Range</h3>
         <div className="grid grid-cols-2 gap-8">
@@ -325,7 +326,7 @@ const ScheduleDetails: React.FC<ScheduleDetailsProps> = ({ schedule, onSave }) =
         </div>
       </div>
 
-      {/* Time Slots Section */}
+      {/!* Time Slots Section *!/}
       <div className="bg-white p-6 rounded-lg shadow-sm">
         <h3 className="text-lg font-medium text-gray-900 mb-4">Time Slots</h3>
         <div className="space-y-4">
@@ -374,7 +375,7 @@ const ScheduleDetails: React.FC<ScheduleDetailsProps> = ({ schedule, onSave }) =
         </div>
       </div>
 
-      {/* Action Buttons */}
+      {/!* Action Buttons *!/}
       <div className="flex justify-end gap-4">
         <button
           type="button"
@@ -400,4 +401,4 @@ const ScheduleDetails: React.FC<ScheduleDetailsProps> = ({ schedule, onSave }) =
   );
 };
 
-export default ScheduleDetails;
+export default ScheduleDetails;*/

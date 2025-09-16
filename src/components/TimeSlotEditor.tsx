@@ -1,3 +1,4 @@
+/*
 import React from 'react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 import { Plus, Trash2, Clock, PlaySquare } from 'lucide-react';
@@ -138,4 +139,4 @@ const TimeSlotEditor: React.FC<TimeSlotEditorProps> = ({ value, onChange, onVali
   );
 };
 
-export default TimeSlotEditor;
+export default TimeSlotEditor;*/

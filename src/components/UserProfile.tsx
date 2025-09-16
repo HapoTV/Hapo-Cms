@@ -1,13 +1,20 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { User, Settings, LogOut } from 'lucide-react';
-import { useAuthStore } from '../store/auth/auth.store';
-import { useNavigate } from 'react-router-dom';
+// src/components/UserProfile.tsx
+
+import {useEffect, useRef, useState} from 'react';
+import {LogOut, Settings, User} from 'lucide-react';
+import {useAuthStore} from '../store/auth/auth.store';
+import {useNavigate} from 'react-router-dom';
+import {useTheme} from '../contexts/ThemeContext';
+import {Button} from './ui/Button';
+import {Card} from './ui/Card';
+import {Badge, BadgeProps} from './ui/Badge';
 
 const UserProfile = () => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
+    const {currentTheme} = useTheme();
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -29,16 +36,16 @@ const UserProfile = () => {
     }
   };
 
-  const getRoleBadgeColor = (role: string) => {
+    const getRoleBadgeVariant = (role: string): BadgeProps['variant'] => {
     switch (role?.toUpperCase()) {
       case 'ROLE_ADMIN':
-        return 'bg-purple-100 text-purple-800';
+          return 'purple';
       case 'ROLE_EDITOR':
-        return 'bg-blue-100 text-blue-800';
+          return 'info';
       case 'ROLE_USER':
-        return 'bg-green-100 text-green-800';
+          return 'success';
       default:
-        return 'bg-gray-100 text-gray-800';
+          return 'default';
     }
   };
 
@@ -46,59 +53,72 @@ const UserProfile = () => {
 
   return (
     <div className="relative" ref={dropdownRef}>
-      <button
+        <Button
+            variant="ghost"
+            size="md"
         onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2 text-gray-600 hover:bg-gray-100 rounded-lg"
         title={user.username}
       >
         <User className="w-6 h-6" />
-      </button>
+        </Button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-72 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
-          <div className="p-4 border-b">
+          <Card elevated padding="none" className="absolute right-0 mt-2 w-72 z-50">
+              <div className="p-4 border-b" style={{borderColor: currentTheme.colors.border.primary}}>
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
-                <User className="w-6 h-6 text-gray-600" />
+                <div
+                    className="w-10 h-10 rounded-full flex items-center justify-center"
+                    style={{backgroundColor: currentTheme.colors.background.secondary}}
+                >
+                    <User className="w-6 h-6" style={{color: currentTheme.colors.text.secondary}}/>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 truncate">
+                  <p
+                      className="text-sm font-medium truncate"
+                      style={{color: currentTheme.colors.text.primary}}
+                  >
                   {user.username}
                 </p>
-                <p className="text-xs text-gray-500 truncate">
+                  <p
+                      className="text-xs truncate"
+                      style={{color: currentTheme.colors.text.tertiary}}
+                  >
                   {user.email}
                 </p>
               </div>
             </div>
-            <div className="mt-3 flex gap-2">
+                  <div className="mt-3 flex flex-wrap gap-2">
               {user.roles.map((role) => (
-                <span 
+                  <Badge
                   key={role}
-                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRoleBadgeColor(role)}`}
+                  variant={getRoleBadgeVariant(role)}
+                  size="sm"
                 >
                   {role.replace('ROLE_', '')}
-                </span>
+                  </Badge>
               ))}
             </div>
           </div>
 
           <div className="p-2">
-            <button
+              <Button
+                  variant="constructive"
               onClick={() => navigate('/settings')}
-              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors duration-150"
+                  className="w-full justify-start"
+                  leftIcon={<Settings className="w-4 h-4"/>}
             >
-              <Settings className="w-4 h-4" />
               Account Settings
-            </button>
-            <button
+              </Button>
+              <Button
+                  variant="destructive"
               onClick={handleLogout}
-              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-150"
+                  className="w-full justify-start"
+                  leftIcon={<LogOut className="w-4 h-4"/>}
             >
-              <LogOut className="w-4 h-4" />
               Sign Out
-            </button>
+              </Button>
           </div>
-        </div>
+          </Card>
       )}
     </div>
   );

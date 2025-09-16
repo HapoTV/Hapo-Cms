@@ -1,7 +1,10 @@
+// src/features/auth/components/LoginForm.tsx
+
 import React, {useState} from 'react';
 import {useNavigate} from 'react-router-dom';
-import {Eye, EyeOff, Loader, Mail} from 'lucide-react';
+import {Eye, EyeOff, Mail} from 'lucide-react';
 import {useAuthStore} from '../../../store/auth/auth.store';
+import {Button, Input} from '../../../components/ui';
 
 export const LoginForm = () => {
   const navigate = useNavigate();
@@ -18,20 +21,18 @@ export const LoginForm = () => {
 
     try {
       await login(formData.email, formData.password);
+        // On successful login, navigate to the root or a dashboard page
       navigate('/');
     } catch (err) {
-      console.error('Failed to login:', err);
+        // The error will be set in the auth store, no need to log here
+        console.error('Login attempt failed', err);
     }
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <div>
-        <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-          Email address
-        </label>
-        <div className="mt-1 relative">
-          <input
+        <Input
+            label="Email address"
             id="email"
             name="email"
             type="email"
@@ -39,21 +40,12 @@ export const LoginForm = () => {
             required
             value={formData.email}
             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-            className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
             placeholder="test@example.com"
+            rightIcon={<Mail className="h-5 w-5"/>}
           />
-          <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
-            <Mail className="h-5 w-5 text-gray-400" />
-          </div>
-        </div>
-      </div>
 
-      <div>
-        <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-          Password
-        </label>
-        <div className="mt-1 relative">
-          <input
+        <Input
+            label="Password"
             id="password"
             name="password"
             type={showPassword ? "text" : "password"}
@@ -61,42 +53,30 @@ export const LoginForm = () => {
             required
             value={formData.password}
             onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-            className="appearance-none block w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-          />
-          <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+            rightIcon={
             <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="text-gray-400 hover:text-gray-600 focus:outline-none focus:text-gray-600"
+                className="hover:opacity-70 focus:outline-none transition-opacity"
                 aria-label={showPassword ? "Hide password" : "Show password"}
             >
-              {showPassword ? (
-                  <EyeOff className="h-5 w-5"/>
-              ) : (
-                  <Eye className="h-5 w-5"/>
-              )}
+                {showPassword ? <EyeOff className="h-5 w-5"/> : <Eye className="h-5 w-5"/>}
             </button>
-          </div>
-        </div>
-      </div>
+            }
+            // Pass the error message from the store directly to the input
+            error={error || undefined}
+        />
 
-      {error && (
-        <div className="text-sm text-red-600">
-          {error}
-        </div>
-      )}
-
-      <button
+        <Button
+            variant="primary"
+            size="lg"
+            // The new Button's loading prop handles the disabled state and spinner automatically
+            loading={isLoading}
+            className="w-full"
         type="submit"
-        disabled={isLoading}
-        className="w-full flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-500 hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        {isLoading ? (
-          <Loader className="h-5 w-5 animate-spin" />
-        ) : (
-          'Sign in'
-        )}
-      </button>
+            Sign in
+        </Button>
     </form>
   );
 };

@@ -6,11 +6,11 @@ import {AppRoutes} from './routes/appRoutes.tsx';
 import {HelmetProvider} from 'react-helmet-async';
 import {ErrorBoundary} from './components/ErrorBoundary';
 import {useAuthStore} from './store/auth/auth.store'; // --> ADD: Import your store
+import {ThemeProvider} from './contexts/ThemeContext';
 
 function App() {
   // --> ADD: Get the checkAuthStatus function from your store
   const checkAuthStatus = useAuthStore((state) => state.checkAuthStatus);
-    //-- deploy loading paused const [deployComplete, setDeployComplete] = useState(false);
 
   // --> ADD: Use the useEffect hook to call the function once on app load
   useEffect(() => {
@@ -22,6 +22,7 @@ function App() {
     // The rest of your component remains the same
   return (
     <ErrorBoundary>
+        <ThemeProvider>
       <HelmetProvider>
           <BrowserRouter
               basename="/"
@@ -33,6 +34,7 @@ function App() {
           <AppRoutes />
         </BrowserRouter>
       </HelmetProvider>
+        </ThemeProvider>
     </ErrorBoundary>
   );
 }

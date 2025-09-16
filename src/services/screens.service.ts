@@ -1,8 +1,15 @@
 // src/services/screens.service.ts
 
 import apiService from './api.service';
-import type {Screen, ScreenConnectionStatus, ScreenCreationPayload, ScreenStatus} from '../types/models/screen.types';
-import {ContentItem} from '../types/models/ContentItem.ts'; // Assuming you have a type for this
+import type {
+    Screen,
+    ScreenConnectionStatus,
+    ScreenCreationPayload,
+    ScreenLocationDTO,
+    ScreenSettingsDTO,
+    ScreenStatus
+} from '../types/models/screen.types';
+import {ContentItem} from '../types/models/ContentItem.ts';
 
 // --- API & PAYLOAD TYPES ---
 
@@ -39,8 +46,7 @@ export interface ScreenStatusCount {
  */
 export type AllScreenStatusCounts = Record<ScreenStatus, number>;
 
-
-// --- SCREENS SERVICE (UPDATED AND PERFECTED) ---
+// --- SCREENS SERVICE (FIXED FOR UUID) ---
 export const screensService = {
 
   // === Core CRUD Operations ===
@@ -60,7 +66,7 @@ export const screensService = {
    * @param id The numeric ID of the screen.
    * @returns A promise that resolves to a single Screen object.
    */
-  getScreenById: async (id: number): Promise<Screen> => {
+  getScreenById: async (id: string): Promise<Screen> => {
     const response = await apiService.get<ApiResponse<Screen>>(`/api/screens/${id}`);
     return response.data;
   },
@@ -81,7 +87,7 @@ export const screensService = {
    * @param payload An object containing the fields to update.
    * @returns A promise that resolves to the updated Screen object.
    */
-  updateScreen: async (id: number, payload: ScreenUpdatePayload): Promise<Screen> => {
+  updateScreen: async (id: string, payload: ScreenUpdatePayload): Promise<Screen> => {
     // 1. Get the current state of the screen
     const currentScreen = await screensService.getScreenById(id);
 
@@ -98,7 +104,7 @@ export const screensService = {
    * NOTE: This assumes you will add a corresponding endpoint to your backend.
    * e.g., @DeleteMapping("/permanent/{screenId}")
    */
-  deleteScreenPermanent: async (id: number): Promise<void> => {
+  deleteScreenPermanent: async (id: string): Promise<void> => {
     // This endpoint must perform a full database delete on the backend.
     await apiService.delete<ApiResponse<string | null>>(`/api/screens/permanent/${id}`);
   },
@@ -123,7 +129,8 @@ export const screensService = {
    * @returns A promise that resolves to an object where keys are statuses and values are the counts.
    */
   countAllScreensByStatus: async (): Promise<AllScreenStatusCounts> => {
-    const response = await apiService.get<ApiResponse<ScreenStatusCount[]>>('/api/screens/count/all-statuses');
+      // Fetch with a flexible type to allow runtime shape guards.
+      const response = await apiService.get<any>('/api/screens/count/all-statuses');
 
     // Initialize with all possible statuses to ensure the UI doesn't break
     // if the API omits a status with a count of 0.
@@ -135,9 +142,27 @@ export const screensService = {
       UNREGISTERED: 0
     };
 
-    // Use the fetched data to populate the initial counts object.
-    return response.data.reduce((acc, item) => {
-      acc[item.status] = item.count;
+      // Determine the actual payload (support both wrapped and unwrapped arrays)
+      const raw = response && Array.isArray(response.data) ? response.data : (Array.isArray(response) ? response : []);
+
+      // Optional debug logging behind env flag
+      try {
+          const debug = (import.meta as any)?.env?.VITE_DEBUG_API === 'true';
+          if (debug) {
+              // eslint-disable-next-line no-console
+              console.log('[DEBUG_API] /api/screens/count/all-statuses raw:', raw);
+          }
+      } catch (_) {
+          // ignore env access issues
+      }
+
+      // Use the fetched data to populate the initial counts object with guards
+      return (raw as any[]).reduce((acc, item) => {
+          const status = String((item as any)?.status).toUpperCase();
+          const count = Number((item as any)?.count ?? 0);
+          if (status in acc && Number.isFinite(count)) {
+              acc[status as ScreenStatus] = count;
+          }
       return acc;
     }, initialCounts);
   },
@@ -147,7 +172,7 @@ export const screensService = {
    * @param screenId The ID of the screen.
    * @param status The new status to set.
    */
-  updateScreenStatus: async (screenId: number, status: ScreenStatus): Promise<void> => {
+  updateScreenStatus: async (screenId: string, status: ScreenStatus): Promise<void> => {
     // The backend returns a simple success message, so we just care about the wrapper
     await apiService.put<ApiResponse<string>>(`/api/screens/${screenId}/status`, status);
   },
@@ -169,7 +194,7 @@ export const screensService = {
    * @param screenId The ID of the screen to get activity for.
    * @returns A promise that resolves to the screen's connection status object.
    */
-  getScreenActivity: async (screenId: number): Promise<ScreenConnectionStatus> => {
+  getScreenActivity: async (screenId: string): Promise<ScreenConnectionStatus> => {
     const response = await apiService.get<ApiResponse<ScreenConnectionStatus>>(`/api/screens/${screenId}/activity`);
     return response.data;
   },
@@ -182,14 +207,63 @@ export const screensService = {
     return response.data;
   },
 
+    /**
+     * Fetches all screen locations (lightweight DTO for mapping/display purposes).
+     * Mirrors the backend endpoint: GET /api/screens/locations
+     */
+    getAllScreenLocations: async (): Promise<ScreenLocationDTO[]> => {
+        const response = await apiService.get<ApiResponse<ScreenLocationDTO[]>>('/api/screens/locations');
+        return response.data;
+    },
+
   /**
    * NEW: Sends new content data to a specific screen.
    * @param screenId The ID of the screen to update.
    * @param contentItem The content payload.
    */
-  updateScreenContent: async (screenId: number, contentItem: ContentItem): Promise<void> => {
+  updateScreenContent: async (screenId: string, contentItem: ContentItem): Promise<void> => {
     await apiService.post<ApiResponse<string>>(`/api/screens/${screenId}/content`, contentItem);
   },
+
+    // === Screen Settings Methods ===
+    getScreenSettings: async (screenId: string): Promise<ScreenSettingsDTO> => {
+        const response = await apiService.get<ApiResponse<ScreenSettingsDTO>>(`/api/screens/${screenId}/settings`);
+        return response.data;
+    },
+
+    updateScreenSettings: async (screenId: string, settings: ScreenSettingsDTO): Promise<ScreenSettingsDTO> => {
+        const response = await apiService.put<ApiResponse<ScreenSettingsDTO>>(`/api/screens/${screenId}/settings`, settings);
+        return response.data;
+    },
+
+    resetScreenSettings: async (screenId: string): Promise<ScreenSettingsDTO> => {
+        const response = await apiService.post<ApiResponse<ScreenSettingsDTO>>(`/api/screens/${screenId}/settings/reset`);
+        return response.data;
+    },
+
+    applyScreenSettingsTemplate: async (screenId: string, templateId: string): Promise<ScreenSettingsDTO> => {
+        const response = await apiService.post<ApiResponse<ScreenSettingsDTO>>(
+            `/api/screens/${screenId}/settings/apply-template`,
+            {templateId}
+        );
+        return response.data;
+    },
+
+    // === Additional missing methods (if needed for device communication) ===
+    connectScreenByCode: async (screenCode: string): Promise<Screen> => {
+        const response = await apiService.post<ApiResponse<Screen>>(`/api/screens/connect/${screenCode}`);
+        return response.data;
+    },
+
+    registerScreen: async (screen: Screen): Promise<string> => {
+        const response = await apiService.post<ApiResponse<string>>('/api/screens/register', screen);
+        return response.data;
+    },
+
+    removeScreen: async (screenId: string): Promise<string> => {
+        const response = await apiService.delete<ApiResponse<string>>(`/api/screens/${screenId}`);
+        return response.data;
+    }
 };
 
 export default screensService;

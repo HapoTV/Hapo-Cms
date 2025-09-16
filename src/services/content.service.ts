@@ -3,6 +3,7 @@
 import apiService from './api.service';
 import {ContentItem, ContentRequest, ContentResponse} from '../types/models/ContentItem';
 
+// A generic interface to match the structure of your backend's ApiResponse
 interface ApiResponse<T> {
   success: boolean;
   message: string;
@@ -12,32 +13,25 @@ interface ApiResponse<T> {
 }
 
 export const contentService = {
+    // --- NEW METHOD FOR SUPABASE WORKFLOW ---
     /**
-   * Uploads content file with metadata
+     * Creates a new content record by sending metadata and the Supabase URL to the backend.
+     * Corresponds to: POST /api/content/create
    */
-  uploadContentWithFile: async (
-  file: File,
+    saveContentMetadata: async (
   contentRequest: ContentRequest
 ): Promise<ContentResponse> => {
-  const formData = new FormData();
-  
-  // Append file (important: use the exact field name expected by backend)
-  formData.append('file', file, file.name);
-  
-  // Append content as JSON blob
-  const contentJson = JSON.stringify(contentRequest);
-  const contentBlob = new Blob([contentJson], { type: 'application/json' });
-  formData.append('content', contentBlob);
-
-  // Use the special upload method
-  return await apiService.upload<ContentResponse>(
-    '/api/content/upload',
-    formData
+        const response = await apiService.post<ApiResponse<ContentResponse>>(
+            '/api/content/create',
+            contentRequest
   );
+        return response.data;
 },
 
+    // --- EXISTING CRUD AND OTHER ENDPOINTS ---
   /**
-   * Creates new content (without file)
+   * Creates a new content entity without a file upload (e.g., for text-based content).
+   * Corresponds to: POST /api/content
    */
   createContent: async (content: ContentItem): Promise<ContentItem> => {
     const response = await apiService.post<ApiResponse<ContentItem>>(
@@ -48,26 +42,22 @@ export const contentService = {
   },
 
     /**
-     * Fetch content by ID
+     * Retrieves a single content item by its UUID.
+     * Corresponds to: GET /api/content/{id}
      */
-    getContentById: async (id: number): Promise<ContentItem> => {
-        console.log(`Calling API endpoint: /api/content/${id}`);
-        try {
+    getContentById: async (id: string): Promise<ContentItem> => {
             const response = await apiService.get<ApiResponse<ContentItem>>(
                 `/api/content/${id}`
             );
-            console.log('API response:', response);
             return response.data;
-        } catch (error) {
-            console.error('API call failed:', error);
-            throw error;
-        }
     },
+
     /**
-     * Update content
+     * Updates an existing content item.
+     * Corresponds to: PUT /api/content/{id}
      */
     updateContent: async (
-        id: number, 
+        id: string,
         content: ContentItem
     ): Promise<ContentItem> => {
         const response = await apiService.put<ApiResponse<ContentItem>>(
@@ -78,14 +68,28 @@ export const contentService = {
     },
 
     /**
-     * Delete content
+     * Deletes a content item by its UUID.
+     * Corresponds to: DELETE /api/content/{id}
      */
-    deleteContent: async (id: number): Promise<void> => {
+    deleteContent: async (id: string): Promise<void> => {
         await apiService.delete(`/api/content/${id}`);
     },
 
     /**
-     * Fetch content by type
+     * Retrieves all content items.
+     * Corresponds to: GET /api/content
+     */
+    getAllContent: async (): Promise<ContentItem[]> => {
+        const response = await apiService.get<ApiResponse<ContentItem[]>>(
+            '/api/content'
+        );
+        return response.data || [];
+    },
+
+    // --- FILTERING ENDPOINTS ---
+    /**
+     * Retrieves a list of content items filtered by a specific type (e.g., MP4, JPEG).
+     * Corresponds to: GET /api/content/type/{type}
      */
     getContentByType: async (type: string): Promise<ContentItem[]> => {
         const response = await apiService.get<ApiResponse<ContentItem[]>>(
@@ -95,43 +99,35 @@ export const contentService = {
     },
 
     /**
-   * CORRECTED: Fetches content by a broad category (e.g., VIDEO, AUDIO).
-   * It now properly unwraps the API response to return the array.
+     * Retrieves a list of content items filtered by a broad category (e.g., VIDEO, AUDIO).
+     * Corresponds to: GET /api/content/category/{category}
    */
   getContentByCategory: async (category: string): Promise<ContentItem[]> => {
-    const responseWrapper = await apiService.get<ApiResponse<ContentItem[]>>(`/api/content/category/${category}`);
-    // Return the nested `data` array, or an empty array if it's missing.
-    return responseWrapper.data || [];
-  },
-
-    /**
-
-    /**
-     * Fetch all content
-     */
-    getAllContent: async (): Promise<ContentItem[]> => {
         const response = await apiService.get<ApiResponse<ContentItem[]>>(
-            '/api/content'
+            `/api/content/category/${category}`
         );
         return response.data || [];
     },
 
+    // --- ACTION ENDPOINTS ---
     /**
-     * Publish content
+     * Sends a request to publish content to one or more screens.
+     * Corresponds to: POST /api/content/publish
      */
     publishContent: async (content: ContentItem): Promise<void> => {
+        // The backend expects a ContentDTO which includes screenIds
         await apiService.post('/api/content/publish', content);
     },
 
     /**
-     * Duplicate content
+     * Duplicates an existing content item.
+     * NOTE: Your controller did not have a /duplicate endpoint, but your previous service file did.
+     * I am including it here for completeness. If you don't have this endpoint, you can remove it.
      */
-    duplicateContent: async(id: number): Promise<ContentItem> => {
+    duplicateContent: async (id: string): Promise<ContentItem> => {
       const response = await apiService.post<ApiResponse<ContentItem>>(`/api/content/duplicate/${id}`);
       return response.data;
     }
-
-     
 };
 
 export default contentService;

@@ -41,7 +41,7 @@ Required dependencies:
 @Table(name = "users")
 public class User {
     @Id
-    private String id;
+    private UUID id;
     private String email;
     private String password;
     private String name;
@@ -58,7 +58,7 @@ public class User {
 @Table(name = "content")
 public class Content {
     @Id
-    private String id;
+    private UUID id;
     private String name;
     @Enumerated(EnumType.STRING)
     private ContentType type;
@@ -78,7 +78,7 @@ public class Content {
 @Table(name = "campaigns")
 public class Campaign {
     @Id
-    private String id;
+    private UUID id;
     private String name;
     private String description;
     private LocalDateTime startDate;
@@ -88,8 +88,8 @@ public class Campaign {
     @Enumerated(EnumType.STRING)
     private CampaignStatus status;
     @ElementCollection
-    private Set<String> contentIds;
-    private String userId;
+    private Set<UUID> contentIds;
+    private UUID userId;
     private LocalDateTime createdAt;
 }
 ```
@@ -100,7 +100,7 @@ public class Campaign {
 @Table(name = "screens")
 public class Screen {
     @Id
-    private String id;
+    private UUID id;
     private String name;
     @Enumerated(EnumType.STRING)
     private ScreenStatus status;
@@ -119,7 +119,7 @@ public class Screen {
 @Table(name = "analytics_events")
 public class AnalyticsEvent {
     @Id
-    private String id;
+    private UUID id;
     @Enumerated(EnumType.STRING)
     private EventType eventType;
     private String campaignId;
@@ -127,7 +127,7 @@ public class AnalyticsEvent {
     private String location;
     private Integer duration;
     private LocalDateTime timestamp;
-    private String userId;
+    private UUID userId;
 }
 ```
 
@@ -137,7 +137,7 @@ public class AnalyticsEvent {
 @Table(name = "system_settings")
 public class SystemSettings {
     @Id
-    private Long id;
+    private UUID id;
     private Integer retentionPeriod;
     @ElementCollection
     private Set<String> defaultTags;

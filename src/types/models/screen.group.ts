@@ -1,12 +1,12 @@
 
 export interface ScreenGroup {
-    id?: number;
+    id?: string;
     name: string;
     description?: string;
-    screenIds: number[];
-    parentGroupId?: number;
-    subGroupIds?: number[];
+    screenIds: string[];
+    parentGroupId?: string;
+    subGroupIds?: string[];
     metadata: Record<string, unknown>;
-    defaultPlaylistId?: number;
+    defaultPlaylistId?: string;
     version?: number;
 }

@@ -1,6 +1,6 @@
 // ContentItem.ts
 export interface ContentItem {
-    id?: number;
+    id?: string;
     name: string;
     type: string;
     url: string;
@@ -8,12 +8,13 @@ export interface ContentItem {
     duration?: number;
     metadata: Record<string, unknown>;
     uploadDate?: string;
-    campaignId?: number;
-    screenIds?: number[];
+    campaignId?: string;
+    screenIds?: string[];
     thumbnailUrl?: string;
 }
 
 export interface ContentRequest {
+    url: string; // The URL from Supabase is now a required field.
     name: string;
     type: string;
     tags?: Record<string, string>;
@@ -31,6 +32,6 @@ export interface ContentResponse {
     duration?: number;
     metadata?: Record<string, unknown>;
     uploadDate?: string;
-    campaignId?: number;
-    screenIds?: number[];
+    campaignId?: string;
+    screenIds?: string[];
 }

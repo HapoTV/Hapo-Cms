@@ -3,7 +3,7 @@ import {FormProvider, useForm} from 'react-hook-form';
 import {zodResolver} from '@hookform/resolvers/zod';
 import {ScreenForm} from './ScreenForm';
 import {screenFormSchema, transformToPayload} from './screenFormSchema';
-import type {Screen, ScreenCreationPayload} from '../../../../types/models/screen.types';
+import type {Screen, ScreenCreationPayload} from '../../../../types';
 
 // Helper to convert backend object to form's {label, value} array
 const fromObject = (obj: Record<string, unknown> | undefined) =>

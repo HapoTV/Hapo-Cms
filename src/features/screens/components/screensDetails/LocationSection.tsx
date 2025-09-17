@@ -1,71 +1,104 @@
-// src/features/screens/components/LocationSection.tsx
+// src/features/screens/components/screensDetails/LocationSection.tsx
 
 import React from 'react';
 import {ExternalLink, MapPin} from 'lucide-react';
 import {LocationMapEmbed} from '../LocationMapEmbed';
 import type {LocationSectionProps} from '../../types/screen-details.types';
+import {useTheme} from '../../../../contexts/ThemeContext';
+import {Alert, Button} from '../../../../components/ui';
 
-export const LocationSection: React.FC<LocationSectionProps> = ({screen, googleMapsApiKey}) => {
+export const LocationSection: React.FC<LocationSectionProps> = ({screen}) => {
+    const {currentTheme} = useTheme();
     const hasLocation = screen?.location?.latitude && screen.location.longitude;
+    const googleMapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
+    // State: No Location Data
     if (!hasLocation) {
         return (
-            <div className="text-center py-8">
-                <MapPin className="w-12 h-12 mx-auto text-gray-300 mb-3"/>
-                <h4 className="font-medium text-gray-900 mb-1">No Location Set</h4>
-                <p className="text-sm text-gray-500">Location coordinates not specified for this screen</p>
+            <div
+                style={{
+                    textAlign: 'center',
+                    paddingBlock: currentTheme.spacing.xl
+                }}
+            >
+                <MapPin
+                    size={48}
+                    style={{
+                        margin: '0 auto 0.75rem',
+                        color: currentTheme.colors.border.secondary
+                    }}
+                />
+                <h4 style={{
+                    fontWeight: 500,
+                    color: currentTheme.colors.text.primary,
+                    marginBottom: currentTheme.spacing.xs
+                }}
+                >
+                    No Location Set
+                </h4>
+                <p
+                    style={{
+                        fontSize: currentTheme.typography.fontSize.sm,
+                        color: currentTheme.colors.text.secondary
+                    }}
+                >
+                    Location coordinates not specified for this screen.
+                </p>
             </div>
         );
     }
 
+    // State: No API Key Configured
     if (!googleMapsApiKey) {
         return (
-            <div className="bg-red-50 p-4 rounded-lg text-center border border-red-200">
-                <div className="text-red-600 mb-2">
-                    <MapPin className="w-8 h-8 mx-auto mb-2"/>
-                    <h4 className="font-semibold">Maps Unavailable</h4>
-                </div>
-                <p className="text-sm text-red-700 mb-3">
-                    Google Maps API key is not configured
-                </p>
-                <p className="text-xs text-red-600">
-                    Set VITE_GOOGLE_MAPS_API_KEY in your environment variables
-                </p>
-            </div>
+            <Alert variant="error" title="Maps Unavailable">
+                Google Maps API key is not configured. Please set VITE_GOOGLE_MAPS_API_KEY in your environment
+                variables.
+            </Alert>
         );
     }
 
     const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${screen.location.latitude},${screen.location.longitude}`;
 
+    // State: Location Data Present
     return (
-        <div className="space-y-4">
-            {/* Location Info Header */}
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                    <MapPin className="w-5 h-5 text-blue-500"/>
+        <div style={{display: 'flex', flexDirection: 'column', gap: currentTheme.spacing.md}}>
+            <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
+                <div style={{display: 'flex', alignItems: 'center', gap: currentTheme.spacing.sm}}>
+                    <MapPin size={20} style={{color: currentTheme.colors.brand.primary}}/>
                     <div>
-                        <h4 className="font-medium text-gray-900">{screen.location.name}</h4>
-                        <p className="text-sm text-gray-500">
+                        <h4 style={{fontWeight: 500, color: currentTheme.colors.text.primary}}>
+                            {screen.location.name}
+                        </h4>
+                        <p style={{
+                            fontSize: currentTheme.typography.fontSize.sm,
+                            color: currentTheme.colors.text.secondary
+                        }}>
                             {screen.location.latitude.toFixed(6)}, {screen.location.longitude.toFixed(6)}
                         </p>
                     </div>
                 </div>
-                <a
-                    href={googleMapsUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1 px-3 py-1.5 text-sm text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
-                    title="Open in Google Maps"
-                >
-                    <ExternalLink className="w-4 h-4"/>
-                    Open
+                <a href={googleMapsUrl}
+                   target="_blank"
+                   rel="noopener noreferrer"
+                   style={{textDecoration: 'none'}}>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        leftIcon={<ExternalLink size={16}/>}
+                    >
+                        Open
+                    </Button>
                 </a>
             </div>
 
-            {/* Map Embed */}
-            <div className="rounded-lg overflow-hidden border border-gray-200 shadow-sm">
+            <div style={{
+                borderRadius: currentTheme.borderRadius.lg,
+                overflow: 'hidden',
+                border: `1px solid ${currentTheme.colors.border.primary}`,
+                boxShadow: currentTheme.shadows.sm
+            }}>
                 <LocationMapEmbed
-                    apiKey={googleMapsApiKey}
                     latitude={screen.location.latitude}
                     longitude={screen.location.longitude}
                     locationName={screen.location.name || 'Screen Location'}

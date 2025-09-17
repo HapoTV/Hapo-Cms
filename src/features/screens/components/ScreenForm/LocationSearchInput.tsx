@@ -1,26 +1,21 @@
-// NEW PATH: src/features/screens/components/LocationSearchInput.tsx
+// src/features/screens/components/LocationSearchInput.tsx
 
 import React, {useState} from 'react';
-import {Autocomplete, useJsApiLoader} from '@react-google-maps/api';
-import type {Location} from '../../../types/models/screen.types';
+import {Autocomplete} from '@react-google-maps/api';
+import type {Location} from '../../../../types/models/screen.types.ts';
+// 1. Import the new context hook
+import {useGoogleMaps} from '../../../../contexts/GoogleMapsProvider.tsx';
+// 2. Import the themed Input component
+import {Alert, Input} from '../../../../components/ui';
 
 interface LocationSearchInputProps {
     initialValue: string;
     onPlaceSelect: (location: Location) => void;
 }
 
-const libraries: ('places')[] = ['places'];
-
 export const LocationSearchInput: React.FC<LocationSearchInputProps> = ({initialValue, onPlaceSelect}) => {
-    // Access the API key from your .env.local.local file
-    const googleMapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-
-    const {isLoaded} = useJsApiLoader({
-        id: 'google-map-script',
-        googleMapsApiKey: googleMapsApiKey || '',
-        libraries,
-    });
-
+    // 3. Get the loading state from the central provider
+    const {isLoaded, loadError} = useGoogleMaps();
     const [autocomplete, setAutocomplete] = useState<google.maps.places.Autocomplete | null>(null);
 
     const onLoad = (ac: google.maps.places.Autocomplete) => {
@@ -43,14 +38,13 @@ export const LocationSearchInput: React.FC<LocationSearchInputProps> = ({initial
         }
     };
 
-    // Show a loading skeleton while the Google Maps script loads
-    if (!isLoaded) {
-        return <div className="h-10 w-full animate-pulse rounded-lg bg-gray-200"></div>;
+    if (loadError) {
+        return <Alert variant="error">Could not load Google Maps Places.</Alert>;
     }
 
-    // Show a helpful error if the API key is missing
-    if (!googleMapsApiKey) {
-        return <div className="text-sm text-red-600">Google Maps API Key is not configured.</div>;
+    // Show a disabled, themed input while the script loads
+    if (!isLoaded) {
+        return <Input placeholder="Loading map..." disabled/>;
     }
 
     return (
@@ -60,11 +54,10 @@ export const LocationSearchInput: React.FC<LocationSearchInputProps> = ({initial
             // UPDATED: Request the 'name' field to get business/landmark names.
             fields={["name", "formatted_address", "geometry.location"]}
         >
-            <input
+            <Input
                 type="text"
                 placeholder="Search for a place or address..."
                 defaultValue={initialValue}
-                className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
             />
         </Autocomplete>
     );

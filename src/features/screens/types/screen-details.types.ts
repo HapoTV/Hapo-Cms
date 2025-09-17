@@ -2,7 +2,7 @@
 
 import {z} from 'zod';
 // Import types from existing files
-import type {Screen, ScreenConnectionStatus, ScreenSettingsDTO} from '../../../types/models/screen.types';
+import type {Screen, ScreenConnectionStatus, ScreenSettings} from '../../../types';
 
 // Form validation schema
 export const settingsFormSchema = z.object({
@@ -60,7 +60,7 @@ export interface LocationSectionProps {
 }
 
 export interface ScreenSettingsFormProps {
-    settings: ScreenSettingsDTO;
+    settings: ScreenSettings;
     onSave: (data: SettingsFormData) => Promise<void>;
     onReset: () => Promise<void>;
     isSaving: boolean;

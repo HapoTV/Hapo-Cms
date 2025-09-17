@@ -1,42 +1,54 @@
 // src/features/screens/components/LocationMapEmbed.tsx
 
 import React from 'react';
+import {GoogleMap, Marker} from '@react-google-maps/api';
+import {useGoogleMaps} from '../../../contexts/GoogleMapsProvider';
+import {Alert, LoadingSpinner} from '../../../components/ui';
 
 interface LocationMapEmbedProps {
-    apiKey: string;
     latitude: number;
     longitude: number;
     locationName: string;
 }
 
-export const LocationMapEmbed: React.FC<LocationMapEmbedProps> = ({
-                                                                      apiKey,
-                                                                      latitude,
-                                                                      longitude,
-                                                                      locationName,
-                                                                  }) => {
-    const mapUrl = `https://www.google.com/maps/embed/v1/place?key=${apiKey}&q=${latitude},${longitude}&zoom=15`;
+const containerStyle = {
+    width: '100%',
+    height: '250px', // A fixed height for the map embed
+};
 
-    return (
-        <div className="w-full">
-            <div className="w-full h-64 lg:h-80 rounded-lg overflow-hidden bg-gray-100">
-                <iframe
-                    width="100%"
-                    height="100%"
-                    style={{border: 0}}
-                    loading="lazy"
-                    allowFullScreen
-                    referrerPolicy="no-referrer-when-downgrade"
-                    src={mapUrl}
-                    title={`Map showing ${locationName}`}
-                    className="w-full h-full"
-                />
+export const LocationMapEmbed: React.FC<LocationMapEmbedProps> = ({latitude, longitude, locationName}) => {
+    // 2. Get loading state from the provider
+    const {isLoaded, loadError} = useGoogleMaps();
+
+    const center = {
+        lat: latitude,
+        lng: longitude,
+    };
+
+    if (loadError) {
+        return (
+            <div style={{...containerStyle, display: 'grid', placeContent: 'center'}}>
+                <Alert variant="error">Map could not be loaded.</Alert>
             </div>
-            <div className="mt-2 px-1">
-                <p className="text-xs text-gray-500 text-center">
-                    📍 {locationName} • {latitude.toFixed(4)}, {longitude.toFixed(4)}
-                </p>
-            </div>
+        );
+    }
+
+    // 3. Conditionally render the map or a loading spinner
+    return isLoaded ? (
+        <GoogleMap
+            mapContainerStyle={containerStyle}
+            center={center}
+            zoom={15} // A reasonable default zoom level
+            options={{
+                disableDefaultUI: true, // Clean look, no controls
+                zoomControl: true,
+            }}
+        >
+            <Marker position={center} title={locationName}/>
+        </GoogleMap>
+    ) : (
+        <div style={{...containerStyle, display: 'grid', placeContent: 'center'}}>
+            <LoadingSpinner size="lg"/>
         </div>
     );
 };

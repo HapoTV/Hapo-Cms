@@ -2,7 +2,7 @@
 
 import {useEffect, useState} from 'react';
 import {screensService} from '../../../services/screens.service';
-import type {Screen, ScreenConnectionStatus} from '../../../types/models/screen.types';
+import type {Screen, ScreenConnectionStatus} from '../../../types';
 
 export const useScreenDetails = (screenId: string | undefined) => {
     const [screen, setScreen] = useState<Screen | null>(null);
@@ -18,7 +18,6 @@ export const useScreenDetails = (screenId: string | undefined) => {
             return;
         }
 
-        const numericScreenId = Number(screenId);
 
         const fetchAllDetails = async () => {
             setLoading(true);
@@ -26,8 +25,8 @@ export const useScreenDetails = (screenId: string | undefined) => {
             setActivityError(null);
 
             const [screenResult, activityResult] = await Promise.allSettled([
-                screensService.getScreenById(numericScreenId),
-                screensService.getScreenActivity(numericScreenId)
+                screensService.getScreenById(screenId),
+                screensService.getScreenActivity(screenId)
             ]);
 
             if (screenResult.status === 'fulfilled') {

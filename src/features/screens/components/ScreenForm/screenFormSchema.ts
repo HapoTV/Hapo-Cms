@@ -5,6 +5,7 @@ const metadataEntrySchema = z.object({
     value: z.string().min(1, 'Value is required'),
 });
 
+// @ts-ignore
 const uniqueLabel = (message: string) => (arr: { label: string }[]) => {
     const labels = arr.map(item => item.label.toLowerCase());
     return labels.length === new Set(labels).size;
@@ -48,10 +49,15 @@ export const screenFormSchema = z.object({
 // This helper function transforms the raw form output into the final backend payload
 export const transformToPayload = (data: z.infer<typeof screenFormSchema>): {
     location: { latitude: number; longitude: number; name: string };
-    metadata: {};
+    metadata: Record<string, string>;
     name: string;
     screenCode: string | undefined;
-    screenSettingsDTO: { cacheMedia: boolean; fallbackToCache: boolean; loop: boolean; settingsMetadata: {} }
+    screenSettingsDTO: {
+        cacheMedia: boolean;
+        fallbackToCache: boolean;
+        loop: boolean;
+        settingsMetadata: Record<string, string>
+    }
 } => {
     const toObject = (arr?: { label: string, value: string }[]) =>
         arr?.reduce((acc, item) => (item.label ? {...acc, [item.label]: item.value} : acc), {}) || {};

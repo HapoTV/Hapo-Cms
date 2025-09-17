@@ -1,6 +1,6 @@
 import {useEffect, useState} from 'react';
 import {screensService} from '../../../services/screens.service';
-import type {Screen} from '../../../types/models/screen.types';
+import type {Screen} from '../../../types';
 
 /**
  * A custom hook to fetch a single screen's data by its ID.
@@ -9,7 +9,7 @@ import type {Screen} from '../../../types/models/screen.types';
  * @param screenId - The ID of the screen to fetch. Can be null or undefined.
  * @returns An object containing the screen data, a loading state, and an error state.
  */
-export const useScreen = (screenId: number | undefined | null) => {
+export const useScreen = (screenId: string | undefined | null) => {
     // State for the screen data itself
     const [screen, setScreen] = useState<Screen | null>(null);
 

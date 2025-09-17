@@ -37,7 +37,7 @@ export const playlistService = {
      * Fetches a single playlist by its ID.
      * Corresponds to: GET /api/playlists/{id}
      */
-    getPlaylistById: async (id: number): Promise<ApiResponse<PlaylistDTO>> => {
+    getPlaylistById: async (id: string): Promise<ApiResponse<PlaylistDTO>> => {
         return apiService.get<ApiResponse<PlaylistDTO>>(`/api/playlists/${id}`);
     },
 
@@ -63,7 +63,7 @@ export const playlistService = {
      * Deletes a playlist by its ID.
      * Corresponds to: DELETE /api/playlists/{id}
      */
-    deletePlaylist: async (id: number): Promise<ApiResponse<string>> => {
+    deletePlaylist: async (id: string): Promise<ApiResponse<string>> => {
         return apiService.delete<ApiResponse<string>>(`/api/playlists/${id}`);
     },
 
@@ -72,7 +72,7 @@ export const playlistService = {
      * The order of content IDs determines the playback order.
      * Corresponds to: PUT /api/playlists/{playlistId}/items
      */
-    updatePlaylistItems: async (playlistId: number, contentIds: number[]): Promise<ApiResponse<PlaylistDTO>> => {
+    updatePlaylistItems: async (playlistId: string, contentIds: string[]): Promise<ApiResponse<PlaylistDTO>> => {
         return apiService.put<ApiResponse<PlaylistDTO>>(`/api/playlists/${playlistId}/items`, contentIds);
     },
 
@@ -80,7 +80,7 @@ export const playlistService = {
      * Adds a single content item to the end of a playlist.
      * Corresponds to: POST /api/playlists/{playlistId}/items/{contentId}
      */
-    addItemToPlaylist: async (playlistId: number, contentId: number, duration?: number): Promise<ApiResponse<PlaylistDTO>> => {
+    addItemToPlaylist: async (playlistId: string, contentId: string, duration?: number): Promise<ApiResponse<PlaylistDTO>> => {
         const url = `/api/playlists/${playlistId}/items/${contentId}`;
         if (duration !== undefined) {
             return apiService.post<ApiResponse<PlaylistDTO>>(`${url}?duration=${duration}`);
@@ -92,7 +92,7 @@ export const playlistService = {
      * Removes a single content item from a playlist.
      * Corresponds to: DELETE /api/playlists/{playlistId}/items/{contentId}
      */
-    removeItemFromPlaylist: async (playlistId: number, contentId: number): Promise<ApiResponse<PlaylistDTO>> => {
+    removeItemFromPlaylist: async (playlistId: string, contentId: string): Promise<ApiResponse<PlaylistDTO>> => {
         return apiService.delete<ApiResponse<PlaylistDTO>>(`/api/playlists/${playlistId}/items/${contentId}`);
     },
 
@@ -100,7 +100,7 @@ export const playlistService = {
      * Moves an item to a specific position (0-based index) in a playlist.
      * Corresponds to: PUT /api/playlists/{playlistId}/items/{contentId}/position/{position}
      */
-    moveItemInPlaylist: async (playlistId: number, contentId: number, position: number): Promise<ApiResponse<PlaylistDTO>> => {
+    moveItemInPlaylist: async (playlistId: string, contentId: string, position: number): Promise<ApiResponse<PlaylistDTO>> => {
         return apiService.put<ApiResponse<PlaylistDTO>>(`/api/playlists/${playlistId}/items/${contentId}/position/${position}`);
     },
 
@@ -108,7 +108,7 @@ export const playlistService = {
      * Updates the custom duration for a specific item within a playlist.
      * Corresponds to: PATCH /api/playlists/{playlistId}/items/{contentId}/duration/{duration}
      */
-    updateItemDuration: async (playlistId: number, contentId: number, duration: number): Promise<ApiResponse<PlaylistDTO>> => {
+    updateItemDuration: async (playlistId: string, contentId: string, duration: number): Promise<ApiResponse<PlaylistDTO>> => {
         return apiService.patch<ApiResponse<PlaylistDTO>>(`/api/playlists/${playlistId}/items/${contentId}/duration/${duration}`);
     },
 
@@ -124,7 +124,7 @@ export const playlistService = {
      * Publishes a playlist to a single screen.
      * Corresponds to: POST /api/playlists/{playlistId}/publish/screen/{screenId}
      */
-    publishPlaylistToScreen: async (playlistId: number, screenId: number): Promise<ApiResponse<string>> => {
+    publishPlaylistToScreen: async (playlistId: string, screenId: string): Promise<ApiResponse<string>> => {
         return apiService.post<ApiResponse<string>>(`/api/playlists/${playlistId}/publish/screen/${screenId}`);
     }
 };

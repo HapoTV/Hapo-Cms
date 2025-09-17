@@ -1,7 +1,7 @@
 // src/types/models/playlist.ts
 
 export interface PlaylistDTO {
-    id: number;
+    id: string; // UUID now
     name: string;
     description?: string;
     playlistData: {
@@ -9,44 +9,40 @@ export interface PlaylistDTO {
         duration: number;
         transition: string;
     };
-    screenIds: number[];
+    screenIds: string[]; // UUIDs
     playlistItems: PlaylistItemDTO[];
-    contentIds?: number[];
+    contentIds?: string[]; // UUIDs
     screenPlaylistQueues: ScreenPlaylistQueueDTO[];
 }
 
 export interface PlaylistItemDTO {
     type: 'content' | 'spotify';
-    contentId?: number;
+    contentId?: string; // UUID
     spotifyId?: string;
     name: string;
     duration: number;
-    playOrder: number; // Ensure playOrder is required
+    playOrder: number;
     thumbnailUrl?: string;
     url?: string;
-    // Spotify-specific fields
     uri?: string;
     album?: any;
     artists?: any[];
     preview_url?: string;
     external_urls?: any;
-    // Content-specific fields
     contentType?: string;
     metadata?: any;
 }
 
-// ... rest of the types remain the same ...
-
-// Strict type for screen playlist queue entries
 export interface ScreenPlaylistQueueDTO {
-    id: number;
-    screenId: number;
-    playlistId: number;
+    id: string;
+    screenId: string;
+    playlistId: string;
     queuePosition: number;
     isActive: boolean;
     screenName: string;
     playlistName: string;
 }
+
 
 // A generic type for Spring's Page object
 export interface Page<T> {

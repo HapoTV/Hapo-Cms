@@ -1,6 +1,6 @@
 import React, {useState} from 'react';
 import {Monitor, Search, X} from 'lucide-react';
-import type {Screen} from '../../../services/screens.service';
+import type {Screen} from '../../../types';
 import {screensService} from '../../../services/screens.service';
 import type {Schedule} from '../types';
 
@@ -21,7 +21,7 @@ export const ScheduleManager: React.FC<ScheduleDetailsModalProps> = ({
     const [description, setDescription] = useState(initialData?.description || '');
     const [screenSearch, setScreenSearch] = useState('');
     const [searchResults, setSearchResults] = useState<Screen[]>([]);
-    const [selectedScreens, setSelectedScreens] = useState<number[]>(initialData?.screenIds || []);
+    const [selectedScreens, setSelectedScreens] = useState<string[]>(initialData?.screenIds || []);
 
     const handleScreenSearch = async (query: string) => {
         setScreenSearch(query);
@@ -38,7 +38,7 @@ export const ScheduleManager: React.FC<ScheduleDetailsModalProps> = ({
         }
     };
 
-    const handleSelectScreen = (screenId: number) => {
+    const handleSelectScreen = (screenId: string) => {
         setSelectedScreens(prev =>
             prev.includes(screenId)
                 ? prev.filter(id => id !== screenId)
@@ -109,7 +109,7 @@ export const ScheduleManager: React.FC<ScheduleDetailsModalProps> = ({
                                     <div
                                         key={screen.id}
                                         className="p-3 flex items-center justify-between hover:bg-gray-50 cursor-pointer"
-                                        onClick={() => handleSelectScreen(screen.id as number)}
+                                        onClick={() => handleSelectScreen(screen.id as string)}
                                     >
                                         <div className="flex items-center gap-2">
                                             <Monitor className="w-4 h-4 text-gray-500" />
@@ -117,8 +117,8 @@ export const ScheduleManager: React.FC<ScheduleDetailsModalProps> = ({
                                         </div>
                                         <input
                                             type="checkbox"
-                                            checked={selectedScreens.includes(screen.id as number)}
-                                            onChange={() => handleSelectScreen(screen.id as number)}
+                                            checked={selectedScreens.includes(screen.id as string)}
+                                            onChange={() => handleSelectScreen(screen.id as string)}
                                             className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                                         />
                                     </div>

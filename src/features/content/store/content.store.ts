@@ -10,11 +10,11 @@ interface ContentState {
     currentContentDetails: ContentItem | null;
     fetchContentByCategory: (category: 'ALL' | 'AUDIO' | 'VIDEO' | 'IMAGE' | 'DOCUMENT' | 'WEBPAGE') => Promise<void>;
     deleteContent: (itemToDelete: ContentItem) => Promise<void>;
-    updateContent: (id: number, updatedContent: ContentItem) => Promise<ContentItem>;
+    updateContent: (id: string, updatedContent: ContentItem) => Promise<ContentItem>;
 
     // New methods
     duplicateContent: (itemToDuplicate: ContentItem) => Promise<ContentItem>;
-    getContentDetails: (id: number) => Promise<ContentItem>;
+    getContentDetails: (id: string) => Promise<ContentItem>;
     clearContentDetails: () => void;
 }
 
@@ -84,7 +84,7 @@ export const useContentStore = create<ContentState>((set, get) => ({
         }
     },
 
-    updateContent: async (id: number, updatedContent: ContentItem) => {
+    updateContent: async (id: string, updatedContent: ContentItem) => {
         console.log(`Updating content ID: ${id}`);
 
         set({isLoading: true, error: null});

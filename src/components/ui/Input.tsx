@@ -2,12 +2,14 @@
 
 import React from 'react';
 import {useTheme} from '../../contexts/ThemeContext';
+// It's good practice to allow optional connection to react-hook-form
+import {useFormContext} from 'react-hook-form';
 
-// We can create a union type for all possible props our component can accept
 type AllInputProps = React.InputHTMLAttributes<HTMLInputElement> &
     React.TextareaHTMLAttributes<HTMLTextAreaElement> &
     React.SelectHTMLAttributes<HTMLSelectElement>;
 
+// 1. ADDED FLEXIBILITY: Add 'checkbox' and 'range' to the 'as' prop type definition
 export interface InputProps extends AllInputProps {
     label?: string;
     error?: string;
@@ -16,14 +18,14 @@ export interface InputProps extends AllInputProps {
     rightIcon?: React.ReactNode;
     variant?: 'default' | 'filled' | 'outlined';
     inputSize?: 'sm' | 'md' | 'lg';
-    // CHANGED: Added 'as' prop to allow polymorphism
-    as?: 'input' | 'textarea' | 'select';
+    as?: 'input' | 'textarea' | 'select' | 'checkbox' | 'range';
     children?: React.ReactNode;
+    name?: string; // name is crucial for many form libraries
 }
 
 export const Input: React.FC<InputProps> = ({
                                                 label,
-                                                error,
+                                                error: propError,
                                                 helperText,
                                                 leftIcon,
                                                 rightIcon,
@@ -33,17 +35,24 @@ export const Input: React.FC<InputProps> = ({
                                                 style = {},
                                                 disabled,
                                                 id,
-                                                // CHANGED: Destructure 'as' and 'children'
                                                 as: Component = 'input',
                                                 children,
+                                                name,
                                                 ...props
                                             }) => {
     const {currentTheme} = useTheme();
-    const inputId = id || `input-${Math.random().toString(36).substr(2, 9)}`;
+    const formCtx = useFormContext();
 
+    const inputId = id || name || `input-${Math.random().toString(36).substr(2, 9)}`;
+
+    // Gracefully handle form state if react-hook-form is used
+    const registerProps = formCtx && name ? formCtx.register(name) : {};
+    const formError = formCtx && name ? formCtx.formState.errors[name]?.message : undefined;
+    const error = propError || (formError as string | undefined);
+
+    // 2. CORRECTED: Style functions are defined here, outside the main return statement.
     const getVariantStyles = () => {
         const {colors} = currentTheme;
-
         const variants = {
             default: {
                 backgroundColor: colors.background.primary,
@@ -67,22 +76,20 @@ export const Input: React.FC<InputProps> = ({
 
     const getSizeStyles = () => {
         const {spacing, typography} = currentTheme;
-
         const sizes = {
             sm: {
                 padding: `${spacing.xs} ${spacing.sm}`,
-                fontSize: typography.fontSize.sm,
-                height: '2rem',
+                fontSize: typography.fontSize.sm, height: '2rem'
             },
             md: {
                 padding: `${spacing.sm} ${spacing.md}`,
                 fontSize: typography.fontSize.base,
-                height: '2.5rem',
+                height: '2.5rem'
             },
             lg: {
                 padding: `${spacing.md} ${spacing.lg}`,
                 fontSize: typography.fontSize.lg,
-                height: '3rem',
+                height: '3rem'
             },
         };
 
@@ -121,7 +128,7 @@ export const Input: React.FC<InputProps> = ({
     const labelStyles: React.CSSProperties = {
         color: currentTheme.colors.text.primary,
         fontSize: currentTheme.typography.fontSize.sm,
-        fontWeight: currentTheme.typography.fontWeight.medium,
+        fontWeight: 500,
         fontFamily: currentTheme.typography.fontFamily.sans,
         marginBottom: currentTheme.spacing.xs,
         display: 'block',
@@ -134,57 +141,132 @@ export const Input: React.FC<InputProps> = ({
         marginTop: currentTheme.spacing.xs,
     };
 
+    // 3. ADDED FLEXIBILITY: Conditional rendering for the 'checkbox' type
+    if (Component === 'checkbox') {
+        const checkboxWrapperStyles: React.CSSProperties = {
+            display: 'flex',
+            alignItems: 'center',
+            gap: currentTheme.spacing.sm,
+            cursor: disabled ? 'not-allowed' : 'pointer',
+            padding: `${currentTheme.spacing.xs} 0`
+        };
+        const checkboxInputStyles: React.CSSProperties = {
+            height: '1rem',
+            width: '1rem',
+            flexShrink: 0,
+            accentColor: currentTheme.colors.brand.primary
+        };
+
+        const checkboxLabelContainerStyles: React.CSSProperties = {
+            display: 'flex',
+            flexDirection: 'column'
+        };
+
+        const checkboxLabelStyles: React.CSSProperties = {
+            color: currentTheme.colors.text.primary,
+            fontSize: currentTheme.typography.fontSize.sm,
+            fontWeight: 500
+        };
+
+        const checkboxHelperTextStyles: React.CSSProperties = {
+            fontSize: currentTheme.typography.fontSize.xs,
+            color: currentTheme.colors.text.tertiary
+        };
+
+        return (
+            <div className={`ui-checkbox-wrapper ${className}`} style={{opacity: disabled ? 0.6 : 1}}>
+                <label htmlFor={inputId} style={checkboxWrapperStyles}>
+                    <input
+                        type="checkbox"
+                        id={inputId}
+                        disabled={disabled}
+                        style={checkboxInputStyles}
+                        {...registerProps}
+                        {...props}
+                    />
+                    <div style={checkboxLabelContainerStyles}>
+                        {label && <span style={checkboxLabelStyles}>{label}</span>}
+                        {helperText && <span style={checkboxHelperTextStyles}>{helperText}</span>}
+                    </div>
+                </label>
+                {error && <p style={helperTextStyles}>{error}</p>}
+            </div>
+        );
+    }
+
+    // 4. ADDED FLEXIBILITY: Conditional rendering for the 'range' type
+    if (Component === 'range') {
+        return (
+            <div className={`ui-range-wrapper ${className}`}>
+                {label &&
+                    <label
+                        htmlFor={inputId}
+                        style={labelStyles}>
+                        {label}
+                    </label>}
+                <input
+                    type="range"
+                    id={inputId}
+                    disabled={disabled}
+                    style={{width: '100%', accentColor: currentTheme.colors.brand.primary}}
+                    {...registerProps}
+                    {...props}
+                />
+                {(error || helperText) && <p style={helperTextStyles}>{error || helperText}</p>}
+            </div>
+        )
+    }
+
+    // Original renderer for 'input', 'textarea', 'select'
     return (
         <div className={`ui-input-wrapper ${className}`}>
-            {label && (
-                <label htmlFor={inputId} style={labelStyles}>
-                    {label}
-                    {props.required && <span style={{color: currentTheme.colors.status.error}}> *</span>}
-                </label>
-            )}
+            {label && <label htmlFor={inputId} style={labelStyles}>
+                {label}{props.required &&
+                <span style={{color: currentTheme.colors.status.error}}>*</span>}
+            </label>}
+            <div style={{position: 'relative'}}>
+                {leftIcon && <div style={{
+                    position: 'absolute',
+                    left: '0.75rem',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    pointerEvents: 'none',
+                    color: currentTheme.colors.text.tertiary
+                }}>{leftIcon}</div>}
 
-            <div className="relative">
-                {leftIcon && (
-                    <div
-                        className="absolute left-3 top-1/2 transform -translate-y-1/2 pointer-events-none"
-                        style={{color: currentTheme.colors.text.tertiary}}
-                    >
-                        {leftIcon}
-                    </div>
-                )}
-
-                {/* CHANGED: This now dynamically renders input, textarea, or select */}
                 <Component
                     id={inputId}
-                    style={inputStyles}
-                    className="ui-input"
+                    style={{
+                        ...inputStyles,
+                        borderColor: error ? currentTheme.colors.status.error : inputStyles.borderColor
+                    }}
                     disabled={disabled}
                     onFocus={(e) => Object.assign(e.target.style, focusStyles)}
                     onBlur={(e) => {
                         e.target.style.borderColor = variantStyles.borderColor;
                         e.target.style.boxShadow = 'none';
                     }}
+                    {...registerProps}
                     {...props}
                 >
-                    {/* Only pass children if the component is a select, preventing the error */}
                     {children}
                 </Component>
 
-                {rightIcon && (
-                    <div
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2"
-                        style={{color: currentTheme.colors.text.tertiary}}
-                    >
-                        {rightIcon}
-                    </div>
-                )}
+                {rightIcon && <div
+                    style={{
+                        position: 'absolute',
+                        right: '0.75rem',
+                        top: '50%',
+                        transform: 'translateY(-50%)'
+                    }}>
+                    {rightIcon}
+                </div>}
             </div>
-
-            {(error || helperText) && (
+            {(error || helperText) &&
                 <p style={helperTextStyles}>
                     {error || helperText}
                 </p>
-            )}
+            }
         </div>
     );
 };

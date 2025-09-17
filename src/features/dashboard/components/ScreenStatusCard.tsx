@@ -4,7 +4,7 @@
 import {useEffect, useState} from 'react';
 import {Monitor} from 'lucide-react';
 import {useNavigate} from 'react-router-dom';
-import screensService from '../../../services/screens.service';
+import {screensService} from '../../../services/screens.service';
 import {ScreenStatus} from '../../../types/models/screen.types.ts';
 import {ThemeColors, useTheme} from '../../../contexts/ThemeContext';
 import {Alert, Badge, Button, Card, LoadingOverlay, StatusBadge, StatusType} from '../../../components/ui';

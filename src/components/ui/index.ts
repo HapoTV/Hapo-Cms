@@ -16,3 +16,4 @@ export {Table, type TableProps, type TableColumn} from './Table';
 export {Alert, type AlertProps} from './Alert';
 export {Tabs, type TabsProps, type TabItem} from './Tabs';
 export {Logo, type LogoProps} from './Logo';
+export {MetadataEditor, type MetadataEditorProps} from './MetadataEditor';

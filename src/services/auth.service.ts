@@ -9,8 +9,8 @@
  */
 
 import apiService from './api.service';
-import { tokenService } from './token.service';
-import type { AuthResponse, LoginRequest, RegisterRequest, User } from '../types/models/user';
+import {tokenService} from './token.service';
+import type {AuthResponse, LoginRequest, RegisterRequest, User} from '../types/models/user';
 
 // --- Constants for Login Rate Limiting ---
 const MAX_LOGIN_ATTEMPTS = 5; // Allow 5 attempts before locking out
@@ -97,6 +97,7 @@ export const authService = {
       return authResponse;
     } catch (error) {
       rateLimiter.recordFailedAttempt(); // Failure, so record the attempt
+        console.error('Login failed:', error);
       // Throw a generic error to avoid revealing whether username/password was correct.
       throw new Error('Login failed. Please check your credentials and try again.');
     }

@@ -5,10 +5,10 @@ import type {
     Screen,
     ScreenConnectionStatus,
     ScreenCreationPayload,
-    ScreenLocationDTO,
-    ScreenSettingsDTO,
+    ScreenLocation,
+    ScreenSettings,
     ScreenStatus
-} from '../types/models/screen.types';
+} from '../types';
 import {ContentItem} from '../types/models/ContentItem.ts';
 
 // --- API & PAYLOAD TYPES ---
@@ -211,8 +211,8 @@ export const screensService = {
      * Fetches all screen locations (lightweight DTO for mapping/display purposes).
      * Mirrors the backend endpoint: GET /api/screens/locations
      */
-    getAllScreenLocations: async (): Promise<ScreenLocationDTO[]> => {
-        const response = await apiService.get<ApiResponse<ScreenLocationDTO[]>>('/api/screens/locations');
+    getAllScreenLocations: async (): Promise<ScreenLocation[]> => {
+        const response = await apiService.get<ApiResponse<ScreenLocation[]>>('/api/screens/locations');
         return response.data;
     },
 
@@ -226,23 +226,23 @@ export const screensService = {
   },
 
     // === Screen Settings Methods ===
-    getScreenSettings: async (screenId: string): Promise<ScreenSettingsDTO> => {
-        const response = await apiService.get<ApiResponse<ScreenSettingsDTO>>(`/api/screens/${screenId}/settings`);
+    getScreenSettings: async (screenId: string): Promise<ScreenSettings> => {
+        const response = await apiService.get<ApiResponse<ScreenSettings>>(`/api/screens/${screenId}/settings`);
         return response.data;
     },
 
-    updateScreenSettings: async (screenId: string, settings: ScreenSettingsDTO): Promise<ScreenSettingsDTO> => {
-        const response = await apiService.put<ApiResponse<ScreenSettingsDTO>>(`/api/screens/${screenId}/settings`, settings);
+    updateScreenSettings: async (screenId: string, settings: ScreenSettings): Promise<ScreenSettings> => {
+        const response = await apiService.put<ApiResponse<ScreenSettings>>(`/api/screens/${screenId}/settings`, settings);
         return response.data;
     },
 
-    resetScreenSettings: async (screenId: string): Promise<ScreenSettingsDTO> => {
-        const response = await apiService.post<ApiResponse<ScreenSettingsDTO>>(`/api/screens/${screenId}/settings/reset`);
+    resetScreenSettings: async (screenId: string): Promise<ScreenSettings> => {
+        const response = await apiService.post<ApiResponse<ScreenSettings>>(`/api/screens/${screenId}/settings/reset`);
         return response.data;
     },
 
-    applyScreenSettingsTemplate: async (screenId: string, templateId: string): Promise<ScreenSettingsDTO> => {
-        const response = await apiService.post<ApiResponse<ScreenSettingsDTO>>(
+    applyScreenSettingsTemplate: async (screenId: string, templateId: string): Promise<ScreenSettings> => {
+        const response = await apiService.post<ApiResponse<ScreenSettings>>(
             `/api/screens/${screenId}/settings/apply-template`,
             {templateId}
         );

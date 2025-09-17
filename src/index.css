@@ -1,3 +1,91 @@
+/* src/index.css */
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Theme CSS Variables */
+:root {
+    /* Default light theme variables will be set by ThemeProvider */
+}
+
+/* Base theme styles */
+body {
+    font-family: var(--typography-fontFamily-sans);
+    background-color: var(--color-background-secondary);
+    color: var(--color-text-primary);
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Theme-aware component styles */
+.themed-button {
+    transition: all 0.2s ease-in-out;
+}
+
+.themed-button:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+.themed-button:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.themed-card {
+    transition: all 0.3s ease;
+}
+
+.themed-card:hover {
+    box-shadow: var(--shadow-lg);
+}
+
+.themed-input {
+    transition: all 0.2s ease-in-out;
+}
+
+/* Custom scrollbar theming */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--color-background-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--color-border-secondary);
+    border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--color-text-tertiary);
+}
+
+/* Selection theming */
+::selection {
+    background-color: var(--color-brand-primary);
+    color: var(--color-text-inverse);
+}
+
+/* Focus ring theming */
+.focus-ring {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--color-border-focus);
+}
+
+/* Animation for theme transitions */
+* {
+    transition-property: background-color, border-color, color, fill, stroke;
+    transition-duration: 0.2s;
+    transition-timing-function: ease-in-out;
+}
+
+/* Theme-specific overrides */
+.theme-dark {
+    color-scheme: dark;
+}
+
+.theme-light {
+    color-scheme: light;
+}

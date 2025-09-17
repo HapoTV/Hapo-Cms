@@ -114,7 +114,12 @@ with Render.com integration.
    npm run dev
    ```
 
-5. When you first access the application, you'll see a loading screen while the backend server wakes up. This typically
+5. To find Unused scripts and code and dependencies run the following
+     ```bash
+      node scripts/analyze-unused-code.js
+      ```
+
+6. When you first access the application, you'll see a loading screen while the backend server wakes up. This typically
    takes about 2 minutes.
 
 ### Development Credentials
